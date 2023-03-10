@@ -1,5 +1,5 @@
 {
-  "name": "node-mysql",
+  "name": "@IwanSergeew/node-mysql",
   "version": "0.0.0",
   "description": "",
   "type": "module",
@@ -29,6 +29,9 @@
   "dependencies": {
     "mysql2": "^3.2.0"
   },
-  "types": "./build/types/index.d.ts"
+  "types": "./build/types/index.d.ts",
+  "publishConfig": {
+    "@IwanSergeew:registry": "https://npm.pkg.github.com"
+  }
 }
 
