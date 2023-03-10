@@ -1,6 +1,6 @@
 {
   "name": "@IwanSergeew/node-mysql",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "",
   "type": "module",
   "main": "./build/index.js",
@@ -34,4 +34,3 @@
     "@IwanSergeew:registry": "https://npm.pkg.github.com"
   }
 }
-
