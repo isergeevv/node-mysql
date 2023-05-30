@@ -1,6 +1,6 @@
 {
   "name": "@IwanSergeew/node-mysql",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "",
   "type": "module",
   "main": "./build/index.js",

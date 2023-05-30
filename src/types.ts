@@ -6,18 +6,6 @@ import {
   PoolConnection,
 } from "mysql2/promise";
 
-export interface MysqlInterface {
-  beginTransaction(): Promise<PoolConnection>;
-  commitTransaction(connection: PoolConnection): void;
-  rollbackTransaction(connection: PoolConnection): void;
-  qry(props: QryProps): Promise<QryReturn>;
-  select(props: SelectProps): Promise<SelectReturn>;
-  insert(props: InsertProps): Promise<number | null>;
-  update(props: UpdateProps): Promise<number>;
-  delete(props: DeleteProps): Promise<number>;
-  checkString(value: string | number): string | number;
-}
-
 export type QryReturn = [
   RowDataPacket[] | RowDataPacket[][] | OkPacket | OkPacket[] | ResultSetHeader,
   FieldPacket[]
