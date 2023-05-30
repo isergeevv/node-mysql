@@ -1,16 +1,5 @@
-import { PoolConnection, RowDataPacket, OkPacket, ResultSetHeader, FieldPacket, PoolOptions } from 'mysql2/promise';
+import { RowDataPacket, OkPacket, ResultSetHeader, FieldPacket, PoolConnection, PoolOptions } from 'mysql2/promise';
 
-interface MysqlInterface {
-    beginTransaction(): Promise<PoolConnection>;
-    commitTransaction(connection: PoolConnection): void;
-    rollbackTransaction(connection: PoolConnection): void;
-    qry(props: QryProps): Promise<QryReturn>;
-    select(props: SelectProps): Promise<SelectReturn>;
-    insert(props: InsertProps): Promise<number | null>;
-    update(props: UpdateProps): Promise<number>;
-    delete(props: DeleteProps): Promise<number>;
-    checkString(value: string | number): string | number;
-}
 type QryReturn = [
     RowDataPacket[] | RowDataPacket[][] | OkPacket | OkPacket[] | ResultSetHeader,
     FieldPacket[]
@@ -66,8 +55,8 @@ type DeleteProps = {
 };
 type Delete = (props: DeleteProps) => Promise<number>;
 
-declare class Mysql implements MysqlInterface {
-    private pool;
+declare class Mysql {
+    private _pool;
     constructor(config: PoolOptions);
     beginTransaction: () => Promise<PoolConnection>;
     commitTransaction: (connection: PoolConnection) => Promise<void>;
@@ -80,4 +69,4 @@ declare class Mysql implements MysqlInterface {
     checkString: (value: string | number) => string | number;
 }
 
-export { Delete, DeleteProps, Insert, InsertProps, MysqlInterface, Qry, QryProps, QryReturn, ResultField, ResultRow, Select, SelectProps, SelectReturn, Update, UpdateProps, Mysql as default };
+export { Delete, DeleteProps, Insert, InsertProps, Qry, QryProps, QryReturn, ResultField, ResultRow, Select, SelectProps, SelectReturn, Update, UpdateProps, Mysql as default };

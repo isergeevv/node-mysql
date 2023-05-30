@@ -13,17 +13,17 @@ import {
   ResultRow,
   Select,
   Update,
-  MysqlInterface,
 } from "./types";
 
-export default class Mysql implements MysqlInterface {
-  private pool: Pool;
+export default class Mysql {
+  private _pool: Pool;
+
   constructor(config: PoolOptions) {
-    this.pool = createPool(config);
+    this._pool = createPool(config);
   }
 
   beginTransaction = async () => {
-    const connection: PoolConnection = await this.pool.getConnection();
+    const connection: PoolConnection = await this._pool.getConnection();
     await connection.beginTransaction();
     return connection;
   };
@@ -42,7 +42,7 @@ export default class Mysql implements MysqlInterface {
 
   qry: Qry = async ({ qry, items = [], conn = null }) => {
     try {
-      const connection = conn || (await this.pool.getConnection());
+      const connection = conn || (await this._pool.getConnection());
       const result = await connection.query(qry, items);
       if (!conn) connection.release();
       return result;

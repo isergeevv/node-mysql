@@ -3,7 +3,7 @@ import { createPool } from 'mysql2/promise';
 class Mysql {
     constructor(config) {
         this.beginTransaction = async () => {
-            const connection = await this.pool.getConnection();
+            const connection = await this._pool.getConnection();
             await connection.beginTransaction();
             return connection;
         };
@@ -21,7 +21,7 @@ class Mysql {
         };
         this.qry = async ({ qry, items = [], conn = null }) => {
             try {
-                const connection = conn || (await this.pool.getConnection());
+                const connection = conn || (await this._pool.getConnection());
                 const result = await connection.query(qry, items);
                 if (!conn)
                     connection.release();
@@ -65,7 +65,7 @@ class Mysql {
         this.checkString = (value) => {
             return typeof value == "string" ? `'${value}'` : value;
         };
-        this.pool = createPool(config);
+        this._pool = createPool(config);
     }
 }
 
