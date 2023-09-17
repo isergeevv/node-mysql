@@ -78,7 +78,7 @@ export default class QryBuilder {
   };
 
   startItem = (startItem: number) => {
-    if (!this._limit) {
+    if (startItem !== 0 && !this._limit) {
       throw new Error('[QryBuilder] Need to set limit before setting startItem.');
     }
     this._startItem = startItem;
