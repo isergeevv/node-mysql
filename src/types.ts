@@ -1,23 +1,9 @@
-import {
-  RowDataPacket,
-  OkPacket,
-  ResultSetHeader,
-  FieldPacket,
-  PoolConnection,
-} from "mysql2/promise";
+import { FieldPacket, PoolConnection } from 'mysql2/promise';
 
-export type QryReturn = [
-  RowDataPacket[] | RowDataPacket[][] | OkPacket | OkPacket[] | ResultSetHeader,
-  FieldPacket[]
-];
-
-export type ResultRow = {
-  [column: string]: any;
-  [column: number]: any;
-};
+export type ResultRow = Record<string, any>;
 export type ResultField = FieldPacket;
 
-export type QryProps = {
+export interface QryProps {
   qry: string;
   items?:
     | any
@@ -26,53 +12,53 @@ export type QryProps = {
         [key: string]: any;
       };
   conn?: PoolConnection | null;
-};
+}
 
-export type Qry = (props: QryProps) => Promise<QryReturn>;
-
-export type SelectProps = {
+export interface SelectProps {
   select?: string;
   from: string;
-  join?: string;
+  join?: Join[];
   where?: string | string[];
   extra?: string;
-  items?: any[];
+  items?: (string | number)[];
   conn?: PoolConnection | null;
-};
+}
 
-export type SelectReturn = {
+export interface SelectReturn {
   rows: ResultRow[];
-  fields: ResultField[];
-};
+  fields: FieldPacket[];
+}
 
-export type Select = (props: SelectProps) => Promise<SelectReturn>;
-
-export type InsertProps = {
+export interface InsertProps {
   into: string;
   items: {
     [key: string]: any;
   };
   conn?: PoolConnection | null;
-};
+}
 
 export type Insert = (props: InsertProps) => Promise<number | null>;
 
-export type UpdateProps = {
+export interface UpdateProps {
   update: string;
   set: string | string[];
   where?: string | string[] | null;
   items?: any[];
   conn?: PoolConnection | null;
-};
+}
 
 export type Update = (props: UpdateProps) => Promise<number>;
 
-export type DeleteProps = {
+export interface DeleteProps {
   from: string;
   where: string | string[];
   items: any[];
   conn?: PoolConnection | null;
-};
+}
 
 export type Delete = (props: DeleteProps) => Promise<number>;
 
+export interface Join {
+  type?: '' | 'LEFT' | 'RIGHT' | 'INNER' | 'OUTER';
+  join: string;
+}

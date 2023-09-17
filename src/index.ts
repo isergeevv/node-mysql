@@ -1,6 +1,6 @@
-export * from "./types";
+import MySQL from './MySQL';
+import QryBuilder from './QryBuilder';
 
-import Mysql from "./Mysql";
-
-export default Mysql;
-
+export * from './types';
+export { QryBuilder };
+export default MySQL;
