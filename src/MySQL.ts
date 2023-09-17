@@ -10,7 +10,7 @@ export default class MySQL {
   }
 
   [Symbol.dispose]() {
-    this._pool.end();
+    this.close();
   }
 
   get pool() {
@@ -89,5 +89,9 @@ export default class MySQL {
 
   checkString = (value: string | number) => {
     return typeof value == 'string' ? `'${value}'` : value;
+  };
+
+  close = () => {
+    this._pool.end();
   };
 }

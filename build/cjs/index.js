@@ -86,7 +86,7 @@ class MySQL {
         this._pool = promise.createPool(config);
     }
     [Symbol.dispose]() {
-        this._pool.end();
+        this.close();
     }
     get pool() {
         return this._pool;
@@ -155,6 +155,9 @@ class MySQL {
     };
     checkString = (value) => {
         return typeof value == 'string' ? `'${value}'` : value;
+    };
+    close = () => {
+        this._pool.end();
     };
 }
 

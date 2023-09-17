@@ -71,6 +71,7 @@ declare class MySQL {
     update: Update;
     delete: Delete;
     checkString: (value: string | number) => string | number;
+    close: () => void;
 }
 
 declare class QryBuilder {
