@@ -1,7 +1,7 @@
-import { RowDataPacket, OkPacket, ResultSetHeader, FieldPacket, PoolConnection, PoolOptions } from 'mysql2/promise';
+import { RowDataPacket, ResultSetHeader, FieldPacket, PoolConnection, PoolOptions } from 'mysql2/promise';
 
 type QryReturn = [
-    RowDataPacket[] | RowDataPacket[][] | OkPacket | OkPacket[] | ResultSetHeader,
+    RowDataPacket[] | RowDataPacket[][] | ResultSetHeader | ResultSetHeader[],
     FieldPacket[]
 ];
 type ResultRow = {

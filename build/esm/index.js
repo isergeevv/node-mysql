@@ -47,7 +47,9 @@ class Mysql {
         this.insert = async ({ into, items, conn = null }) => {
             const qry = `INSERT INTO ${into} SET ?`;
             const result = await this.qry({ qry, items, conn });
-            return result && result[0] ? result[0].insertId : null;
+            return result && result[0]
+                ? result[0].insertId
+                : null;
         };
         this.update = async ({ update, set, where = null, items = [], conn = null, }) => {
             const qry = `UPDATE ${update} SET ${typeof set == "string" ? set : set.join(", ")}` +
@@ -55,12 +57,16 @@ class Mysql {
                     ? ` WHERE ${typeof where == "string" ? where : where.join(" AND ")}`
                     : "");
             const result = await this.qry({ qry, items, conn });
-            return result && result[0] ? result[0].changedRows : 0;
+            return result && result[0]
+                ? result[0].affectedRows
+                : 0;
         };
         this.delete = async ({ from, where, items = [], conn = null }) => {
             const qry = `DELETE FROM ${from} WHERE ${typeof where == "string" ? where : where.join(" AND ")}`;
             const result = await this.qry({ qry, items, conn });
-            return result && result[0] ? result[0].affectedRows : 0;
+            return result && result[0]
+                ? result[0].affectedRows
+                : 0;
         };
         this.checkString = (value) => {
             return typeof value == "string" ? `'${value}'` : value;

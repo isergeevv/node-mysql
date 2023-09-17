@@ -1,6 +1,4 @@
+import DB from "./DB";
+
 export * from "./types";
-
-import Mysql from "./Mysql";
-
-export default Mysql;
-
+export default DB;
