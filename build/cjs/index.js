@@ -1,4 +1,6 @@
-import { escape, createPool } from 'mysql2/promise';
+'use strict';
+
+var promise = require('mysql2/promise');
 
 class QryBuilder {
     _statement;
@@ -41,7 +43,7 @@ class QryBuilder {
         }
         qry = qry.concat(';');
         for (const item of this._items) {
-            qry = qry.replace('?', escape(item));
+            qry = qry.replace('?', promise.escape(item));
         }
         return qry;
     }
@@ -81,7 +83,7 @@ class QryBuilder {
 class MySQL {
     _pool;
     constructor(config) {
-        this._pool = createPool(config);
+        this._pool = promise.createPool(config);
     }
     [Symbol.dispose]() {
         this._pool.end();
@@ -156,4 +158,5 @@ class MySQL {
     };
 }
 
-export { MySQL, QryBuilder };
+exports.MySQL = MySQL;
+exports.QryBuilder = QryBuilder;

@@ -94,4 +94,4 @@ declare class QryBuilder {
     setItems: (...items: (string | number)[]) => this;
 }
 
-export { Delete, DeleteProps, Insert, InsertProps, Join, QryBuilder, QryProps, ResultField, ResultRow, SelectProps, SelectReturn, Update, UpdateProps, MySQL as default };
+export { Delete, DeleteProps, Insert, InsertProps, Join, MySQL, QryBuilder, QryProps, ResultField, ResultRow, SelectProps, SelectReturn, Update, UpdateProps };

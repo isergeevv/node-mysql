@@ -4,6 +4,10 @@
   "description": "",
   "type": "module",
   "main": "./build/esm/index.js",
+  "exports": {
+    "require": "./build/cjs/index.js",
+    "import": "./build/esm/index.js"
+  },
   "types": "./build/types/index.d.ts",
   "scripts": {
     "build": "npx rollup -c rollup.config.js",
