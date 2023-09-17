@@ -32,7 +32,7 @@ interface InsertProps {
     };
     conn?: PoolConnection | null;
 }
-type Insert = (props: InsertProps) => Promise<number | null>;
+type Insert = (props: InsertProps) => Promise<number>;
 interface UpdateProps {
     update: string;
     set: string | string[];
@@ -52,12 +52,20 @@ interface Join {
     type?: '' | 'LEFT' | 'RIGHT' | 'INNER' | 'OUTER';
     join: string;
 }
+declare enum QRY_TYPES {
+    INSERT = 0,
+    SELECT = 1,
+    DELETE = 2,
+    UPDATE = 3
+}
 
 declare class MySQL {
     private _pool;
+    private _lastInsertId;
     constructor(config: PoolOptions);
     [Symbol.dispose](): void;
     get pool(): Pool;
+    get lastInsertId(): number;
     getConnection: () => Promise<PoolConnection>;
     beginTransaction: () => Promise<PoolConnection>;
     commitTransaction: (connection: PoolConnection) => Promise<void>;
@@ -75,24 +83,30 @@ declare class MySQL {
 }
 
 declare class QryBuilder {
-    private _statement;
+    private _type;
     private _table;
+    private _set;
     private _joins;
     private _where;
     private _startItem;
     private _limit;
     private _extra;
     private _items;
-    constructor(start: string);
+    private _itemValues;
+    constructor(type: QRY_TYPES);
     static select: (...items: string[]) => QryBuilder;
+    static insert: (items?: Record<string, string | number>) => QryBuilder;
     export(): string;
     from: (table: string) => this;
+    into: (table: string) => this;
+    set: (items: Record<string, string | number>) => this;
     join: (...joins: Join[]) => this;
     where: (...where: string[]) => this;
     limit: (limit: number) => this;
     startItem: (startItem: number) => this;
     extra: (extra: string) => this;
-    setItems: (...items: (string | number)[]) => this;
+    setItems: (...items: string[]) => this;
+    setItemValues: (...items: (string | number)[]) => this;
 }
 
-export { Delete, DeleteProps, Insert, InsertProps, Join, MySQL, QryBuilder, QryProps, ResultField, ResultRow, SelectProps, SelectReturn, Update, UpdateProps };
+export { Delete, DeleteProps, Insert, InsertProps, Join, MySQL, QRY_TYPES, QryBuilder, QryProps, ResultField, ResultRow, SelectProps, SelectReturn, Update, UpdateProps };

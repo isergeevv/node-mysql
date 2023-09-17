@@ -37,7 +37,7 @@ export interface InsertProps {
   conn?: PoolConnection | null;
 }
 
-export type Insert = (props: InsertProps) => Promise<number | null>;
+export type Insert = (props: InsertProps) => Promise<number>;
 
 export interface UpdateProps {
   update: string;
@@ -61,4 +61,11 @@ export type Delete = (props: DeleteProps) => Promise<number>;
 export interface Join {
   type?: '' | 'LEFT' | 'RIGHT' | 'INNER' | 'OUTER';
   join: string;
+}
+
+export enum QRY_TYPES {
+  INSERT,
+  SELECT,
+  DELETE,
+  UPDATE,
 }

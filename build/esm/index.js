@@ -1,52 +1,94 @@
 import { escape, createPool } from 'mysql2/promise';
 
+var QRY_TYPES;
+(function (QRY_TYPES) {
+    QRY_TYPES[QRY_TYPES["INSERT"] = 0] = "INSERT";
+    QRY_TYPES[QRY_TYPES["SELECT"] = 1] = "SELECT";
+    QRY_TYPES[QRY_TYPES["DELETE"] = 2] = "DELETE";
+    QRY_TYPES[QRY_TYPES["UPDATE"] = 3] = "UPDATE";
+})(QRY_TYPES || (QRY_TYPES = {}));
+
 class QryBuilder {
-    _statement;
+    _type;
     _table;
+    _set;
     _joins;
     _where;
     _startItem;
     _limit;
     _extra;
     _items;
-    constructor(start) {
-        this._statement = start;
+    _itemValues;
+    constructor(type) {
+        this._type = type;
         this._table = '';
         this._joins = [];
         this._where = [];
         this._extra = '';
-        this._items = [];
+        this._itemValues = [];
         this._startItem = 0;
         this._limit = 0;
+        this._set = {};
+        this._items = [];
     }
     static select = (...items) => {
-        return new QryBuilder(`SELECT ${items.length ? items.join(', ') : '*'}`);
+        const qryBuilder = new QryBuilder(QRY_TYPES.SELECT);
+        qryBuilder.setItems(...items);
+        return qryBuilder;
+    };
+    static insert = (items) => {
+        const qryBuilder = new QryBuilder(QRY_TYPES.INSERT);
+        if (items)
+            qryBuilder.set(items);
+        return qryBuilder;
     };
     export() {
-        let qry = this._statement;
-        if (this._table.length) {
-            qry = qry.concat(` FROM ${this._table}`);
+        if (!this._table.length) {
+            throw new Error('[QryBuilder] Missing table.');
         }
-        for (const join of this._joins) {
-            qry = qry.concat(`${join.type?.length ? ` ${join.type}` : ''} JOIN ${join.join}`);
-        }
-        if (this._where.length) {
-            qry = qry.concat(` WHERE ${this._where.join(' AND ')}`);
-        }
-        if (this._limit) {
-            qry = qry.concat(` LIMIT ${this._startItem}, ${this._limit}`);
-        }
-        if (this._extra) {
-            qry = qry.concat(` ${this._extra}`);
+        let qry = '';
+        switch (this._type) {
+            case QRY_TYPES.SELECT: {
+                qry = qry.concat(`SELECT ${this._items.length ? this._items.join(', ') : '*'} FROM ${this._table}`);
+                for (const join of this._joins) {
+                    qry = qry.concat(`${join.type?.length ? ` ${join.type}` : ''} JOIN ${join.join}`);
+                }
+                if (this._where.length) {
+                    qry = qry.concat(` WHERE ${this._where.join(' AND ')}`);
+                }
+                if (this._limit) {
+                    qry = qry.concat(` LIMIT ${this._startItem}, ${this._limit}`);
+                }
+                if (this._extra) {
+                    qry = qry.concat(` ${this._extra}`);
+                }
+                break;
+            }
+            case QRY_TYPES.INSERT: {
+                qry = qry.concat(`INSERT INTO ${this._table}`);
+                const keys = Object.keys(this._set);
+                if (keys.length) {
+                    qry = qry.concat(` SET ${keys.map((key) => `${key} = ${escape(this._set[key])}`).join(', ')}`);
+                }
+                break;
+            }
         }
         qry = qry.concat(';');
-        for (const item of this._items) {
-            qry = qry.replace('?', escape(item));
+        for (const item of this._itemValues) {
+            qry = qry.replace(' = ?', ` = ${escape(item)}`);
         }
         return qry;
     }
     from = (table) => {
         this._table = table;
+        return this;
+    };
+    into = (table) => {
+        this._table = table;
+        return this;
+    };
+    set = (items) => {
+        this._set = items;
         return this;
     };
     join = (...joins) => {
@@ -76,18 +118,27 @@ class QryBuilder {
         this._items = [...items];
         return this;
     };
+    setItemValues = (...items) => {
+        this._itemValues = [...items];
+        return this;
+    };
 }
 
 class MySQL {
     _pool;
+    _lastInsertId;
     constructor(config) {
         this._pool = createPool(config);
+        this._lastInsertId = 0;
     }
     [Symbol.dispose]() {
         this.close();
     }
     get pool() {
         return this._pool;
+    }
+    get lastInsertId() {
+        return this._lastInsertId;
     }
     getConnection = async () => {
         return await this._pool.getConnection();
@@ -127,7 +178,7 @@ class MySQL {
             .join(...(Array.isArray(join) ? join : [join]))
             .where(...(Array.isArray(where) ? where : [where]))
             .extra(extra)
-            .setItems(...items)
+            .setItemValues(...items)
             .export();
         const result = await this.qry({ qry, items, conn });
         return {
@@ -138,7 +189,8 @@ class MySQL {
     insert = async ({ into, items, conn = null }) => {
         const qry = `INSERT INTO ${into} SET ?`;
         const result = await this.qry({ qry, items, conn });
-        return result && result[0] ? result[0].insertId : null;
+        this._lastInsertId = result && result[0] ? result[0].insertId : 0;
+        return this._lastInsertId;
     };
     update = async ({ update, set, where = null, items = [], conn = null }) => {
         const qry = `UPDATE ${update} SET ${typeof set == 'string' ? set : set.join(', ')}` +
@@ -159,4 +211,4 @@ class MySQL {
     };
 }
 
-export { MySQL, QryBuilder };
+export { MySQL, QRY_TYPES, QryBuilder };

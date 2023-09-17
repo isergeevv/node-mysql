@@ -4,9 +4,11 @@ import QryBuilder from './QryBuilder';
 
 export default class MySQL {
   private _pool: Pool;
+  private _lastInsertId: number;
 
   constructor(config: PoolOptions) {
     this._pool = createPool(config);
+    this._lastInsertId = 0;
   }
 
   [Symbol.dispose]() {
@@ -15,6 +17,9 @@ export default class MySQL {
 
   get pool() {
     return this._pool;
+  }
+  get lastInsertId() {
+    return this._lastInsertId;
   }
 
   getConnection = async () => {
@@ -56,7 +61,7 @@ export default class MySQL {
       .join(...(Array.isArray(join) ? join : [join]))
       .where(...(Array.isArray(where) ? where : [where]))
       .extra(extra)
-      .setItems(...items)
+      .setItemValues(...items)
       .export();
 
     const result = await this.qry({ qry, items, conn });
@@ -69,7 +74,8 @@ export default class MySQL {
   insert: Insert = async ({ into, items, conn = null }) => {
     const qry = `INSERT INTO ${into} SET ?`;
     const result = await this.qry({ qry, items, conn });
-    return result && result[0] ? (result[0] as ResultSetHeader).insertId : null;
+    this._lastInsertId = result && result[0] ? (result[0] as ResultSetHeader).insertId : 0;
+    return this._lastInsertId;
   };
 
   update: Update = async ({ update, set, where = null, items = [], conn = null }) => {
