@@ -1,17 +1,23 @@
 import { escape, createPool } from 'mysql2/promise';
 
-var QRY_TYPES;
-(function (QRY_TYPES) {
-    QRY_TYPES[QRY_TYPES["INSERT"] = 0] = "INSERT";
-    QRY_TYPES[QRY_TYPES["SELECT"] = 1] = "SELECT";
-    QRY_TYPES[QRY_TYPES["DELETE"] = 2] = "DELETE";
-    QRY_TYPES[QRY_TYPES["UPDATE"] = 3] = "UPDATE";
-})(QRY_TYPES || (QRY_TYPES = {}));
+const generateParameterizedQuery = (queryString, values = []) => {
+    // Parse the query to identify placeholders
+    const placeholders = queryString.match(/\?/g);
+    if (!placeholders)
+        return queryString;
+    if (placeholders.length !== values.length) {
+        throw new Error('[util->generateParameterizedQuery] Mismatch between placeholders and values.');
+    }
+    // Prepare the statement with placeholders
+    const preparedQuery = queryString.replace(/\?/g, () => {
+        // Ensure proper escaping and formatting based on data type
+        return escape(values.shift());
+    });
+    return preparedQuery;
+};
 
-class QryBuilder {
-    _type;
+class QrySelectBuilder {
     _table;
-    _set;
     _joins;
     _where;
     _startItem;
@@ -19,8 +25,7 @@ class QryBuilder {
     _extra;
     _items;
     _itemValues;
-    constructor(type) {
-        this._type = type;
+    constructor(...items) {
         this._table = '';
         this._joins = [];
         this._where = [];
@@ -28,67 +33,30 @@ class QryBuilder {
         this._itemValues = [];
         this._startItem = 0;
         this._limit = 0;
-        this._set = {};
-        this._items = [];
+        this._items = items;
     }
-    static select = (...items) => {
-        const qryBuilder = new QryBuilder(QRY_TYPES.SELECT);
-        qryBuilder.setItems(...items);
-        return qryBuilder;
-    };
-    static insert = (items) => {
-        const qryBuilder = new QryBuilder(QRY_TYPES.INSERT);
-        if (items)
-            qryBuilder.set(items);
-        return qryBuilder;
-    };
     export() {
         if (!this._table.length) {
-            throw new Error('[QryBuilder] Missing table.');
+            throw new Error('[QrySelectBuilder] Missing table.');
         }
-        let qry = '';
-        switch (this._type) {
-            case QRY_TYPES.SELECT: {
-                qry = qry.concat(`SELECT ${this._items.length ? this._items.join(', ') : '*'} FROM ${this._table}`);
-                for (const join of this._joins) {
-                    qry = qry.concat(`${join.type?.length ? ` ${join.type}` : ''} JOIN ${join.join}`);
-                }
-                if (this._where.length) {
-                    qry = qry.concat(` WHERE ${this._where.join(' AND ')}`);
-                }
-                if (this._limit) {
-                    qry = qry.concat(` LIMIT ${this._startItem}, ${this._limit}`);
-                }
-                if (this._extra) {
-                    qry = qry.concat(` ${this._extra}`);
-                }
-                break;
-            }
-            case QRY_TYPES.INSERT: {
-                qry = qry.concat(`INSERT INTO ${this._table}`);
-                const keys = Object.keys(this._set);
-                if (keys.length) {
-                    qry = qry.concat(` SET ${keys.map((key) => `${key} = ${escape(this._set[key])}`).join(', ')}`);
-                }
-                break;
-            }
+        let qry = `SELECT ${this._items.length ? this._items.join(', ') : '*'} FROM ${this._table}`;
+        for (const join of this._joins) {
+            qry = qry.concat(`${join.type?.length ? ` ${join.type}` : ''} JOIN ${join.join}`);
+        }
+        if (this._where.length) {
+            qry = qry.concat(` WHERE ${this._where.join(' AND ')}`);
+        }
+        if (this._limit) {
+            qry = qry.concat(` LIMIT ${this._startItem}, ${this._limit}`);
+        }
+        if (this._extra) {
+            qry = qry.concat(` ${this._extra}`);
         }
         qry = qry.concat(';');
-        for (const item of this._itemValues) {
-            qry = qry.replace(' = ?', ` = ${escape(item)}`);
-        }
-        return qry;
+        return generateParameterizedQuery(qry, this._itemValues);
     }
     from = (table) => {
         this._table = table;
-        return this;
-    };
-    into = (table) => {
-        this._table = table;
-        return this;
-    };
-    set = (items) => {
-        this._set = items;
         return this;
     };
     join = (...joins) => {
@@ -114,13 +82,117 @@ class QryBuilder {
         this._extra = extra;
         return this;
     };
-    setItems = (...items) => {
-        this._items = [...items];
+    setItemValues = (...items) => {
+        this._itemValues = [...items];
+        return this;
+    };
+}
+
+class QryInsertBuilder {
+    _table;
+    _set;
+    constructor(items) {
+        this._table = '';
+        this._set = items || {};
+    }
+    export() {
+        if (!this._table.length) {
+            throw new Error('[QryInsertBuilder] Missing table.');
+        }
+        const keys = Object.keys(this._set);
+        return (`INSERT INTO ${this._table}` +
+            (keys.length ? ` SET ${keys.map((key) => `${key} = ${escape(this._set[key])}`).join(', ')}` : '') +
+            ';');
+    }
+    into = (table) => {
+        this._table = table;
+        return this;
+    };
+    set = (items) => {
+        this._set = items;
+        return this;
+    };
+}
+
+class QryDeleteBuilder {
+    _table;
+    _where;
+    _itemValues;
+    constructor() {
+        this._table = '';
+        this._where = [];
+        this._itemValues = [];
+    }
+    export() {
+        if (!this._table.length) {
+            throw new Error('[QryDeleteBuilder] Missing table.');
+        }
+        const qry = `DELETE FROM ${this._table}` + (this._where.length ? ` WHERE ${this._where.join(' AND ')}` : '') + ';';
+        return generateParameterizedQuery(qry, this._itemValues);
+    }
+    from = (table) => {
+        this._table = table;
+        return this;
+    };
+    where = (...where) => {
+        this._where = [...where];
         return this;
     };
     setItemValues = (...items) => {
         this._itemValues = [...items];
         return this;
+    };
+}
+
+class QryUpdateBuilder {
+    _table;
+    _where;
+    _items;
+    _itemValues;
+    constructor(table) {
+        this._table = table;
+        this._where = [];
+        this._itemValues = [];
+        this._items = [];
+    }
+    export() {
+        if (!this._table.length) {
+            throw new Error('[QryUpdateBuilder] Missing table.');
+        }
+        if (!this._items.length) {
+            throw new Error('[QryUpdateBuilder] Missing set items.');
+        }
+        const qry = `UPDATE ${this._table} SET ${this._items.join(', ')}` +
+            (this._where.length ? ` WHERE ${this._where.join(' AND ')}` : '') +
+            ';';
+        return generateParameterizedQuery(qry, this._itemValues);
+    }
+    set = (...items) => {
+        this._items = items;
+        return this;
+    };
+    where = (...where) => {
+        this._where = [...where];
+        return this;
+    };
+    setItemValues = (...items) => {
+        this._itemValues = [...items];
+        return this;
+    };
+}
+
+class QryBuilder {
+    static select = (...items) => {
+        return new QrySelectBuilder(...items);
+    };
+    static insert = (items) => {
+        return new QryInsertBuilder(items);
+    };
+    static delete = () => {
+        return new QryDeleteBuilder();
+    };
+    static update = (table) => {
+        return new QryUpdateBuilder(table);
     };
 }
 
@@ -160,7 +232,7 @@ class MySQL {
         connection.rollback();
         connection.release();
     };
-    qry = async ({ qry, items = [], conn = null }) => {
+    qry = async ({ qry, items = [], conn }) => {
         try {
             const connection = conn || (await this.getConnection());
             const result = await connection.query(qry, items);
@@ -172,34 +244,47 @@ class MySQL {
             throw new Error(`Error: ${e.message}.\nQuery: ${qry}\nItems: ${items.join(', ')}`);
         }
     };
-    select = async ({ select = '*', from, join = [], where = '', extra = '', items = [], conn = null }) => {
-        const qry = QryBuilder.select(select)
-            .from(from)
-            .join(...(Array.isArray(join) ? join : [join]))
-            .where(...(Array.isArray(where) ? where : [where]))
-            .extra(extra)
-            .setItemValues(...items)
-            .export();
-        const result = await this.qry({ qry, items, conn });
+    select = async ({ qry, select = '*', from, join = [], where = [], extra = '', items = [], conn }) => {
+        if (!qry)
+            qry = QryBuilder.select(select)
+                .from(from)
+                .join(...(Array.isArray(join) ? join : [join]))
+                .where(...(Array.isArray(where) ? where : [where]))
+                .extra(extra)
+                .setItemValues(...items)
+                .export();
+        const result = await this.qry({ qry, conn });
         return {
             rows: result[0],
             fields: result[1],
         };
     };
-    insert = async ({ into, items, conn = null }) => {
-        const qry = `INSERT INTO ${into} SET ?`;
-        const result = await this.qry({ qry, items, conn });
-        this._lastInsertId = result && result[0] ? result[0].insertId : 0;
-        return this._lastInsertId;
+    insert = async ({ qry, into, items, conn }) => {
+        if (!qry)
+            qry = QryBuilder.insert(items).into(into).export();
+        const result = await this.qry({ qry, conn });
+        const insertId = result && result[0] ? result[0].insertId : 0;
+        if (insertId)
+            this._lastInsertId = insertId;
+        return insertId;
     };
-    update = async ({ update, set, where = null, items = [], conn = null }) => {
-        const qry = `UPDATE ${update} SET ${typeof set == 'string' ? set : set.join(', ')}` +
-            (where ? ` WHERE ${typeof where == 'string' ? where : where.join(' AND ')}` : '');
-        const result = await this.qry({ qry, items, conn });
+    update = async ({ qry, table, set, where = [], items = [], conn }) => {
+        if (!qry)
+            qry = QryBuilder.update(table)
+                .set(...(Array.isArray(set) ? set : [set]))
+                .where(...(Array.isArray(where) ? where : [where]))
+                .setItemValues(...items)
+                .export();
+        const result = await this.qry({ qry, conn });
         return result && result[0] ? result[0].affectedRows : 0;
     };
-    delete = async ({ from, where, items = [], conn = null }) => {
-        const qry = `DELETE FROM ${from} WHERE ${typeof where == 'string' ? where : where.join(' AND ')}`;
+    delete = async ({ qry, table, where, items = [], conn }) => {
+        if (!qry)
+            qry = QryBuilder.delete()
+                .from(table)
+                .where(...(Array.isArray(where) ? where : [where]))
+                .setItemValues(...items)
+                .export();
         const result = await this.qry({ qry, items, conn });
         return result && result[0] ? result[0].affectedRows : 0;
     };
@@ -211,4 +296,4 @@ class MySQL {
     };
 }
 
-export { MySQL, QRY_TYPES, QryBuilder };
+export { MySQL, QryBuilder };

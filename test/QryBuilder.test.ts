@@ -13,7 +13,7 @@ describe(`QryBuilder`, () => {
         QryBuilder.select().export();
         expect(true).toBeFalsy();
       } catch (e: any) {
-        expect(e.message).toEqual('[QryBuilder] Missing table.');
+        expect(e.message).toEqual('[QrySelectBuilder] Missing table.');
       }
     });
 
@@ -90,7 +90,7 @@ describe(`QryBuilder`, () => {
         QryBuilder.select().from(`users`).startItem(25);
         expect(true).toBeFalsy();
       } catch (e: any) {
-        expect(e.message).toEqual('[QryBuilder] Need to set limit before setting startItem.');
+        expect(e.message).toEqual('[QrySelectBuilder] Need to set limit before setting startItem.');
       }
     });
 
@@ -113,7 +113,7 @@ describe(`QryBuilder`, () => {
         QryBuilder.insert().export();
         expect(true).toBeFalsy();
       } catch (e: any) {
-        expect(e.message).toEqual('[QryBuilder] Missing table.');
+        expect(e.message).toEqual('[QryInsertBuilder] Missing table.');
       }
     });
 

@@ -10,53 +10,52 @@ interface QryProps {
     items?: any | any[] | {
         [key: string]: any;
     };
-    conn?: PoolConnection | null;
+    conn?: PoolConnection;
 }
 interface SelectProps {
+    qry?: string;
     select?: string;
     from: string;
     join?: Join[];
     where?: string | string[];
     extra?: string;
     items?: (string | number)[];
-    conn?: PoolConnection | null;
+    conn?: PoolConnection;
 }
 interface SelectReturn {
     rows: ResultRow[];
     fields: FieldPacket[];
 }
+type Select = (props: SelectProps) => Promise<SelectReturn>;
 interface InsertProps {
+    qry?: string;
     into: string;
     items: {
         [key: string]: any;
     };
-    conn?: PoolConnection | null;
+    conn?: PoolConnection;
 }
 type Insert = (props: InsertProps) => Promise<number>;
 interface UpdateProps {
-    update: string;
+    qry?: string;
+    table: string;
     set: string | string[];
-    where?: string | string[] | null;
-    items?: any[];
-    conn?: PoolConnection | null;
+    where?: string | string[];
+    items?: (string | number)[];
+    conn?: PoolConnection;
 }
 type Update = (props: UpdateProps) => Promise<number>;
 interface DeleteProps {
-    from: string;
+    qry?: string;
+    table: string;
     where: string | string[];
     items: any[];
-    conn?: PoolConnection | null;
+    conn?: PoolConnection;
 }
 type Delete = (props: DeleteProps) => Promise<number>;
 interface Join {
     type?: '' | 'LEFT' | 'RIGHT' | 'INNER' | 'OUTER';
     join: string;
-}
-declare enum QRY_TYPES {
-    INSERT = 0,
-    SELECT = 1,
-    DELETE = 2,
-    UPDATE = 3
 }
 
 declare class MySQL {
@@ -71,10 +70,7 @@ declare class MySQL {
     commitTransaction: (connection: PoolConnection) => Promise<void>;
     rollbackTransaction: (connection: PoolConnection) => Promise<void>;
     qry: ({ qry, items, conn }: QryProps) => Promise<[mysql2_typings_mysql_lib_protocol_packets_OkPacket.OkPacket | ResultSetHeader | mysql2_typings_mysql_lib_protocol_packets_RowDataPacket.RowDataPacket[] | ResultSetHeader[] | mysql2_typings_mysql_lib_protocol_packets_RowDataPacket.RowDataPacket[][] | mysql2_typings_mysql_lib_protocol_packets_OkPacket.OkPacket[] | [mysql2_typings_mysql_lib_protocol_packets_RowDataPacket.RowDataPacket[], ResultSetHeader], mysql2_typings_mysql_lib_protocol_packets_FieldPacket.FieldPacket[]]>;
-    select: ({ select, from, join, where, extra, items, conn }: SelectProps) => Promise<{
-        rows: ResultRow[];
-        fields: mysql2_typings_mysql_lib_protocol_packets_FieldPacket.FieldPacket[];
-    }>;
+    select: Select;
     insert: Insert;
     update: Update;
     delete: Delete;
@@ -82,10 +78,12 @@ declare class MySQL {
     close: () => void;
 }
 
-declare class QryBuilder {
-    private _type;
+interface QryBuilderInterface {
+    export(): string;
+}
+
+declare class QrySelectBuilder implements QryBuilderInterface {
     private _table;
-    private _set;
     private _joins;
     private _where;
     private _startItem;
@@ -93,20 +91,54 @@ declare class QryBuilder {
     private _extra;
     private _items;
     private _itemValues;
-    constructor(type: QRY_TYPES);
-    static select: (...items: string[]) => QryBuilder;
-    static insert: (items?: Record<string, string | number>) => QryBuilder;
+    constructor(...items: string[]);
     export(): string;
     from: (table: string) => this;
-    into: (table: string) => this;
-    set: (items: Record<string, string | number>) => this;
     join: (...joins: Join[]) => this;
     where: (...where: string[]) => this;
     limit: (limit: number) => this;
     startItem: (startItem: number) => this;
     extra: (extra: string) => this;
-    setItems: (...items: string[]) => this;
     setItemValues: (...items: (string | number)[]) => this;
 }
 
-export { Delete, DeleteProps, Insert, InsertProps, Join, MySQL, QRY_TYPES, QryBuilder, QryProps, ResultField, ResultRow, SelectProps, SelectReturn, Update, UpdateProps };
+declare class QryInsertBuilder implements QryBuilderInterface {
+    private _table;
+    private _set;
+    constructor(items?: Record<string, string | number>);
+    export(): string;
+    into: (table: string) => this;
+    set: (items: Record<string, string | number>) => this;
+}
+
+declare class QryDeleteBuilder implements QryBuilderInterface {
+    private _table;
+    private _where;
+    private _itemValues;
+    constructor();
+    export(): string;
+    from: (table: string) => this;
+    where: (...where: string[]) => this;
+    setItemValues: (...items: (string | number)[]) => this;
+}
+
+declare class QryUpdateBuilder implements QryBuilderInterface {
+    private _table;
+    private _where;
+    private _items;
+    private _itemValues;
+    constructor(table: string);
+    export(): string;
+    set: (...items: string[]) => this;
+    where: (...where: string[]) => this;
+    setItemValues: (...items: (string | number)[]) => this;
+}
+
+declare class QryBuilder {
+    static select: (...items: string[]) => QrySelectBuilder;
+    static insert: (items?: Record<string, string | number>) => QryInsertBuilder;
+    static delete: () => QryDeleteBuilder;
+    static update: (table: string) => QryUpdateBuilder;
+}
+
+export { Delete, DeleteProps, Insert, InsertProps, Join, MySQL, QryBuilder, QryProps, ResultField, ResultRow, Select, SelectProps, SelectReturn, Update, UpdateProps };
