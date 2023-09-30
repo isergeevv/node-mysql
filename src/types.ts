@@ -3,26 +3,15 @@ import { FieldPacket, PoolConnection } from 'mysql2/promise';
 export type ResultRow = Record<string, any>;
 export type ResultField = FieldPacket;
 
-export interface QryProps {
-  qry: string;
-  items?:
-    | any
-    | any[]
-    | {
-        [key: string]: any;
-      };
-  conn?: PoolConnection;
-}
+export type QryItems = any | any[] | Record<string, any>;
 
 export interface SelectProps {
-  qry?: string;
-  select?: string;
+  select?: string | string[];
   from: string;
   join?: Join[];
   where?: string | string[];
   extra?: string;
   items?: (string | number)[];
-  conn?: PoolConnection;
 }
 
 export interface SelectReturn {
@@ -30,21 +19,17 @@ export interface SelectReturn {
   fields: FieldPacket[];
 }
 
-export type Select = (props: SelectProps) => Promise<SelectReturn>;
+export type Select = (qry: string | SelectProps, conn?: PoolConnection) => Promise<SelectReturn>;
 
 export interface InsertProps {
-  qry?: string;
   into: string;
-  items: {
-    [key: string]: any;
-  };
+  items: Record<string, any>;
   conn?: PoolConnection;
 }
 
-export type Insert = (props: InsertProps) => Promise<number>;
+export type Insert = (qry: string | InsertProps, conn?: PoolConnection) => Promise<number>;
 
 export interface UpdateProps {
-  qry?: string;
   table: string;
   set: string | string[];
   where?: string | string[];
@@ -52,17 +37,16 @@ export interface UpdateProps {
   conn?: PoolConnection;
 }
 
-export type Update = (props: UpdateProps) => Promise<number>;
+export type Update = (qry: string | UpdateProps, conn?: PoolConnection) => Promise<number>;
 
 export interface DeleteProps {
-  qry?: string;
   table: string;
   where: string | string[];
   items: any[];
   conn?: PoolConnection;
 }
 
-export type Delete = (props: DeleteProps) => Promise<number>;
+export type Delete = (qry: string | DeleteProps, conn?: PoolConnection) => Promise<number>;
 
 export interface Join {
   type?: '' | 'LEFT' | 'RIGHT' | 'INNER' | 'OUTER';

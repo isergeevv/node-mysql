@@ -1,5 +1,5 @@
 import { createPool, Pool, PoolConnection, PoolOptions, ResultSetHeader } from 'mysql2/promise';
-import { Delete, Insert, QryProps, ResultField, ResultRow, Select, Update } from './types';
+import { Delete, Insert, QryItems, ResultField, ResultRow, Select, Update } from './types';
 import QryBuilder from './QryBuilder';
 
 export default class MySQL {
@@ -44,7 +44,7 @@ export default class MySQL {
     connection.release();
   };
 
-  qry = async ({ qry, items = [], conn }: QryProps) => {
+  qry = async (qry: string, items: QryItems = [], conn?: PoolConnection) => {
     try {
       const connection = conn || (await this.getConnection());
       const result = await connection.query(qry, items);
@@ -55,17 +55,19 @@ export default class MySQL {
     }
   };
 
-  select: Select = async ({ qry, select = '*', from, join = [], where = [], extra = '', items = [], conn }) => {
-    if (!qry)
-      qry = QryBuilder.select(select)
-        .from(from)
-        .join(...(Array.isArray(join) ? join : [join]))
-        .where(...(Array.isArray(where) ? where : [where]))
-        .extra(extra)
-        .setItemValues(...items)
-        .export();
+  select: Select = async (qry, conn) => {
+    const sql =
+      typeof qry === 'string'
+        ? qry
+        : QryBuilder.select(...(qry.select ? (Array.isArray(qry.select) ? qry.select : [qry.select]) : ['*']))
+            .from(qry.from)
+            .join(...(qry.join ? (Array.isArray(qry.join) ? qry.join : [qry.join]) : []))
+            .where(...(qry.where ? (Array.isArray(qry.where) ? qry.where : [qry.where]) : []))
+            .extra(qry.extra || '')
+            .setItemValues(...(qry.items || []))
+            .export();
 
-    const result = await this.qry({ qry, conn });
+    const result = await this.qry(sql, conn);
 
     return {
       rows: result[0] as ResultRow[],
@@ -73,37 +75,41 @@ export default class MySQL {
     };
   };
 
-  insert: Insert = async ({ qry, into, items, conn }) => {
-    if (!qry) qry = QryBuilder.insert(items).into(into).export();
+  insert: Insert = async (qry, conn) => {
+    const sql = typeof qry === 'string' ? qry : QryBuilder.insert(qry.items).into(qry.into).export();
 
-    const result = await this.qry({ qry, conn });
+    const result = await this.qry(sql, conn);
     const insertId = result && result[0] ? (result[0] as ResultSetHeader).insertId : 0;
     if (insertId) this._lastInsertId = insertId;
 
     return insertId;
   };
 
-  update: Update = async ({ qry, table, set, where = [], items = [], conn }) => {
-    if (!qry)
-      qry = QryBuilder.update(table)
-        .set(...(Array.isArray(set) ? set : [set]))
-        .where(...(Array.isArray(where) ? where : [where]))
-        .setItemValues(...items)
-        .export();
+  update: Update = async (qry, conn) => {
+    const sql =
+      typeof qry === 'string'
+        ? qry
+        : QryBuilder.update(qry.table)
+            .set(...(Array.isArray(qry.set) ? qry.set : [qry.set]))
+            .where(...(qry.where ? (Array.isArray(qry.where) ? qry.where : [qry.where]) : []))
+            .setItemValues(...(qry.items || []))
+            .export();
 
-    const result = await this.qry({ qry, conn });
+    const result = await this.qry(sql, conn);
     return result && result[0] ? (result[0] as ResultSetHeader).affectedRows : 0;
   };
 
-  delete: Delete = async ({ qry, table, where, items = [], conn }) => {
-    if (!qry)
-      qry = QryBuilder.delete()
-        .from(table)
-        .where(...(Array.isArray(where) ? where : [where]))
-        .setItemValues(...items)
-        .export();
+  delete: Delete = async (qry, conn) => {
+    const sql =
+      typeof qry === 'string'
+        ? qry
+        : QryBuilder.delete()
+            .from(qry.table)
+            .where(...(Array.isArray(qry.where) ? qry.where : [qry.where]))
+            .setItemValues(...qry.items)
+            .export();
 
-    const result = await this.qry({ qry, items, conn });
+    const result = await this.qry(sql, conn);
 
     return result && result[0] ? (result[0] as ResultSetHeader).affectedRows : 0;
   };
