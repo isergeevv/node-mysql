@@ -11,17 +11,18 @@ export interface QryProps {
     | {
         [key: string]: any;
       };
-  conn?: PoolConnection | null;
+  conn?: PoolConnection;
 }
 
 export interface SelectProps {
+  qry?: string;
   select?: string;
   from: string;
   join?: Join[];
   where?: string | string[];
   extra?: string;
   items?: (string | number)[];
-  conn?: PoolConnection | null;
+  conn?: PoolConnection;
 }
 
 export interface SelectReturn {
@@ -29,31 +30,36 @@ export interface SelectReturn {
   fields: FieldPacket[];
 }
 
+export type Select = (props: SelectProps) => Promise<SelectReturn>;
+
 export interface InsertProps {
+  qry?: string;
   into: string;
   items: {
     [key: string]: any;
   };
-  conn?: PoolConnection | null;
+  conn?: PoolConnection;
 }
 
-export type Insert = (props: InsertProps) => Promise<number | null>;
+export type Insert = (props: InsertProps) => Promise<number>;
 
 export interface UpdateProps {
-  update: string;
+  qry?: string;
+  table: string;
   set: string | string[];
-  where?: string | string[] | null;
-  items?: any[];
-  conn?: PoolConnection | null;
+  where?: string | string[];
+  items?: (string | number)[];
+  conn?: PoolConnection;
 }
 
 export type Update = (props: UpdateProps) => Promise<number>;
 
 export interface DeleteProps {
-  from: string;
+  qry?: string;
+  table: string;
   where: string | string[];
   items: any[];
-  conn?: PoolConnection | null;
+  conn?: PoolConnection;
 }
 
 export type Delete = (props: DeleteProps) => Promise<number>;

@@ -15,6 +15,15 @@ const config = [
   {
     input: 'src/index.ts',
     output: {
+      file: 'build/cjs/index.js',
+      format: 'cjs',
+    },
+    plugins: [typescript(), resolve()],
+    external: ['mysql2/promise'],
+  },
+  {
+    input: 'src/index.ts',
+    output: {
       file: 'build/types/index.d.ts',
       format: 'es',
     },

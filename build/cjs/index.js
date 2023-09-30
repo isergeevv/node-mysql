@@ -1,4 +1,6 @@
-import { escape, createPool } from 'mysql2/promise';
+'use strict';
+
+var promise = require('mysql2/promise');
 
 const generateParameterizedQuery = (queryString, values = []) => {
     // Parse the query to identify placeholders
@@ -11,7 +13,7 @@ const generateParameterizedQuery = (queryString, values = []) => {
     // Prepare the statement with placeholders
     const preparedQuery = queryString.replace(/\?/g, () => {
         // Ensure proper escaping and formatting based on data type
-        return escape(values.shift());
+        return promise.escape(values.shift());
     });
     return preparedQuery;
 };
@@ -101,7 +103,7 @@ class QryInsertBuilder {
         }
         const keys = Object.keys(this._set);
         return (`INSERT INTO ${this._table}` +
-            (keys.length ? ` SET ${keys.map((key) => `${key} = ${escape(this._set[key])}`).join(', ')}` : '') +
+            (keys.length ? ` SET ${keys.map((key) => `${key} = ${promise.escape(this._set[key])}`).join(', ')}` : '') +
             ';');
     }
     into = (table) => {
@@ -200,7 +202,7 @@ class MySQL {
     _pool;
     _lastInsertId;
     constructor(config) {
-        this._pool = createPool(config);
+        this._pool = promise.createPool(config);
         this._lastInsertId = 0;
     }
     [Symbol.dispose]() {
@@ -296,4 +298,5 @@ class MySQL {
     };
 }
 
-export { MySQL, QryBuilder };
+exports.MySQL = MySQL;
+exports.QryBuilder = QryBuilder;
