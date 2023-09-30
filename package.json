@@ -28,7 +28,7 @@
     "@IwanSergeew:registry": "https://npm.pkg.github.com"
   },
   "dependencies": {
-    "mysql2": "^3.2.0"
+    "mysql2": "^3.6.1"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.0.1",

@@ -75,7 +75,7 @@ class QrySelectBuilder {
     };
     startItem = (startItem) => {
         if (startItem !== 0 && !this._limit) {
-            throw new Error('[QryBuilder] Need to set limit before setting startItem.');
+            throw new Error('[QrySelectBuilder] Need to set limit before setting startItem.');
         }
         this._startItem = startItem;
         return this;
