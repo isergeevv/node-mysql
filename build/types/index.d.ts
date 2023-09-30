@@ -5,54 +5,41 @@ import { FieldPacket, PoolConnection, PoolOptions, Pool, ResultSetHeader } from 
 
 type ResultRow = Record<string, any>;
 type ResultField = FieldPacket;
-interface QryProps {
-    qry: string;
-    items?: any | any[] | {
-        [key: string]: any;
-    };
-    conn?: PoolConnection;
-}
+type QryItems = any | any[] | Record<string, any>;
 interface SelectProps {
-    qry?: string;
-    select?: string;
+    select?: string | string[];
     from: string;
     join?: Join[];
     where?: string | string[];
     extra?: string;
     items?: (string | number)[];
-    conn?: PoolConnection;
 }
 interface SelectReturn {
     rows: ResultRow[];
     fields: FieldPacket[];
 }
-type Select = (props: SelectProps) => Promise<SelectReturn>;
+type Select = (qry: string | SelectProps, conn?: PoolConnection) => Promise<SelectReturn>;
 interface InsertProps {
-    qry?: string;
     into: string;
-    items: {
-        [key: string]: any;
-    };
+    items: Record<string, any>;
     conn?: PoolConnection;
 }
-type Insert = (props: InsertProps) => Promise<number>;
+type Insert = (qry: string | InsertProps, conn?: PoolConnection) => Promise<number>;
 interface UpdateProps {
-    qry?: string;
     table: string;
     set: string | string[];
     where?: string | string[];
     items?: (string | number)[];
     conn?: PoolConnection;
 }
-type Update = (props: UpdateProps) => Promise<number>;
+type Update = (qry: string | UpdateProps, conn?: PoolConnection) => Promise<number>;
 interface DeleteProps {
-    qry?: string;
     table: string;
     where: string | string[];
     items: any[];
     conn?: PoolConnection;
 }
-type Delete = (props: DeleteProps) => Promise<number>;
+type Delete = (qry: string | DeleteProps, conn?: PoolConnection) => Promise<number>;
 interface Join {
     type?: '' | 'LEFT' | 'RIGHT' | 'INNER' | 'OUTER';
     join: string;
@@ -69,7 +56,7 @@ declare class MySQL {
     beginTransaction: () => Promise<PoolConnection>;
     commitTransaction: (connection: PoolConnection) => Promise<void>;
     rollbackTransaction: (connection: PoolConnection) => Promise<void>;
-    qry: ({ qry, items, conn }: QryProps) => Promise<[mysql2_typings_mysql_lib_protocol_packets_OkPacket.OkPacket | ResultSetHeader | mysql2_typings_mysql_lib_protocol_packets_RowDataPacket.RowDataPacket[] | ResultSetHeader[] | mysql2_typings_mysql_lib_protocol_packets_RowDataPacket.RowDataPacket[][] | mysql2_typings_mysql_lib_protocol_packets_OkPacket.OkPacket[] | [mysql2_typings_mysql_lib_protocol_packets_RowDataPacket.RowDataPacket[], ResultSetHeader], mysql2_typings_mysql_lib_protocol_packets_FieldPacket.FieldPacket[]]>;
+    qry: (qry: string, items?: QryItems, conn?: PoolConnection) => Promise<[mysql2_typings_mysql_lib_protocol_packets_OkPacket.OkPacket | ResultSetHeader | mysql2_typings_mysql_lib_protocol_packets_RowDataPacket.RowDataPacket[] | ResultSetHeader[] | mysql2_typings_mysql_lib_protocol_packets_RowDataPacket.RowDataPacket[][] | mysql2_typings_mysql_lib_protocol_packets_OkPacket.OkPacket[] | [mysql2_typings_mysql_lib_protocol_packets_RowDataPacket.RowDataPacket[], ResultSetHeader], mysql2_typings_mysql_lib_protocol_packets_FieldPacket.FieldPacket[]]>;
     select: Select;
     insert: Insert;
     update: Update;
@@ -141,4 +128,4 @@ declare class QryBuilder {
     static update: (table: string) => QryUpdateBuilder;
 }
 
-export { Delete, DeleteProps, Insert, InsertProps, Join, MySQL, QryBuilder, QryProps, ResultField, ResultRow, Select, SelectProps, SelectReturn, Update, UpdateProps };
+export { Delete, DeleteProps, Insert, InsertProps, Join, MySQL, QryBuilder, QryItems, ResultField, ResultRow, Select, SelectProps, SelectReturn, Update, UpdateProps };

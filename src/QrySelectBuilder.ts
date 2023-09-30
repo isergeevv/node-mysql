@@ -42,7 +42,7 @@ export default class QrySelectBuilder implements QryBuilderInterface {
       qry = qry.concat(` LIMIT ${this._startItem}, ${this._limit}`);
     }
 
-    if (this._extra) {
+    if (this._extra.length) {
       qry = qry.concat(` ${this._extra}`);
     }
 
