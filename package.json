@@ -1,5 +1,5 @@
 {
-  "name": "@IwanSergeew/node-mysql",
+  "name": "@isergeevv/node-mysql",
   "version": "1.2.3",
   "description": "",
   "type": "module",
@@ -15,17 +15,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/IwanSergeew/node-mysql.git"
+    "url": "git+https://github.com/isergeevv/node-mysql.git"
   },
   "keywords": [],
-  "author": "IwanSergeew",
+  "author": "isergeevv",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/IwanSergeew/node-mysql/issues"
+    "url": "https://github.com/isergeevv/node-mysql/issues"
   },
-  "homepage": "https://github.com/IwanSergeew/node-mysql#readme",
+  "homepage": "https://github.com/isergeevv/node-mysql#readme",
   "publishConfig": {
-    "@IwanSergeew:registry": "https://npm.pkg.github.com"
+    "@isergeevv:registry": "https://npm.pkg.github.com"
   },
   "dependencies": {
     "mysql2": "^3.6.1"
