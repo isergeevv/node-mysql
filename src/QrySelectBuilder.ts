@@ -1,4 +1,4 @@
-import { Join, ORDER } from './types';
+import { Join, ORDER_DIRECTION, SelectOrder } from './types';
 import QryBuilderInterface from './interface/QryBuilderInterface';
 import { generateParameterizedQuery } from './util';
 
@@ -8,8 +8,7 @@ export default class QrySelectBuilder implements QryBuilderInterface {
   private _where: string[];
   private _startItem: number;
   private _limit: number;
-  private _orderBy: string[];
-  private _order: string;
+  private _order: SelectOrder[];
   private _extra: string;
   private _items: string[];
   private _itemValues: (string | number)[];
@@ -18,8 +17,7 @@ export default class QrySelectBuilder implements QryBuilderInterface {
     this._table = '';
     this._joins = [];
     this._where = [];
-    this._orderBy = [];
-    this._order = ORDER.ASC;
+    this._order = [];
     this._extra = '';
     this._itemValues = [];
     this._startItem = 0;
@@ -44,6 +42,12 @@ export default class QrySelectBuilder implements QryBuilderInterface {
 
     if (this._limit) {
       qry = qry.concat(` LIMIT ${this._startItem}, ${this._limit}`);
+    }
+
+    if (this._order.length) {
+      qry = qry.concat(
+        ` ORDER BY ${this._order.map((order) => `${order.columns.join(', ')} ${order.direction}`).join(',')}`,
+      );
     }
 
     if (this._extra.length) {
@@ -75,9 +79,14 @@ export default class QrySelectBuilder implements QryBuilderInterface {
     return this;
   };
 
-  order = (order: ORDER, columns: string[] = []) => {
-    this._order = order;
-    this._orderBy.push(...columns);
+  order = (direction: ORDER_DIRECTION, columns: string[]) => {
+    if (!columns.length) {
+      throw new Error('[QrySelectBuilder] Need to set columns to be ordered by.');
+    }
+    this._order.push({
+      direction: direction,
+      columns: columns,
+    });
     return this;
   };
 

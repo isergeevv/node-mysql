@@ -2,12 +2,6 @@
 
 var promise = require('mysql2/promise');
 
-exports.ORDER = void 0;
-(function (ORDER) {
-    ORDER["ASC"] = "ASC";
-    ORDER["DESC"] = "DESC";
-})(exports.ORDER || (exports.ORDER = {}));
-
 const generateParameterizedQuery = (queryString, values = []) => {
     // Parse the query to identify placeholders
     const placeholders = queryString.match(/\?/g);
@@ -30,7 +24,6 @@ class QrySelectBuilder {
     _where;
     _startItem;
     _limit;
-    _orderBy;
     _order;
     _extra;
     _items;
@@ -39,8 +32,7 @@ class QrySelectBuilder {
         this._table = '';
         this._joins = [];
         this._where = [];
-        this._orderBy = [];
-        this._order = exports.ORDER.ASC;
+        this._order = [];
         this._extra = '';
         this._itemValues = [];
         this._startItem = 0;
@@ -60,6 +52,9 @@ class QrySelectBuilder {
         }
         if (this._limit) {
             qry = qry.concat(` LIMIT ${this._startItem}, ${this._limit}`);
+        }
+        if (this._order.length) {
+            qry = qry.concat(` ORDER BY ${this._order.map((order) => `${order.columns.join(', ')} ${order.direction}`).join(',')}`);
         }
         if (this._extra.length) {
             qry = qry.concat(` ${this._extra}`);
@@ -83,9 +78,14 @@ class QrySelectBuilder {
         this._limit = limit;
         return this;
     };
-    order = (order, columns = []) => {
-        this._order = order;
-        this._orderBy.push(...columns);
+    order = (direction, columns) => {
+        if (!columns.length) {
+            throw new Error('[QrySelectBuilder] Need to set columns to be ordered by.');
+        }
+        this._order.push({
+            direction: direction,
+            columns: columns,
+        });
         return this;
     };
     startItem = (startItem) => {
@@ -314,6 +314,12 @@ class MySQL {
         this._pool.end();
     };
 }
+
+exports.ORDER_DIRECTION = void 0;
+(function (ORDER_DIRECTION) {
+    ORDER_DIRECTION["ASC"] = "ASC";
+    ORDER_DIRECTION["DESC"] = "DESC";
+})(exports.ORDER_DIRECTION || (exports.ORDER_DIRECTION = {}));
 
 exports.MySQL = MySQL;
 exports.QryBuilder = QryBuilder;

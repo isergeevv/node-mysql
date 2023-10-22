@@ -53,7 +53,12 @@ export interface Join {
   join: string;
 }
 
-export enum ORDER {
+export enum ORDER_DIRECTION {
   ASC = 'ASC',
   DESC = 'DESC',
+}
+
+export interface SelectOrder {
+  direction: ORDER_DIRECTION;
+  columns: string[];
 }
