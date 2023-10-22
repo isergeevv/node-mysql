@@ -52,3 +52,13 @@ export interface Join {
   type?: '' | 'LEFT' | 'RIGHT' | 'INNER' | 'OUTER';
   join: string;
 }
+
+export enum ORDER_DIRECTION {
+  ASC = 'ASC',
+  DESC = 'DESC',
+}
+
+export interface SelectOrder {
+  direction: ORDER_DIRECTION;
+  columns: string[];
+}

@@ -22,6 +22,7 @@ class QrySelectBuilder {
     _where;
     _startItem;
     _limit;
+    _order;
     _extra;
     _items;
     _itemValues;
@@ -29,6 +30,7 @@ class QrySelectBuilder {
         this._table = '';
         this._joins = [];
         this._where = [];
+        this._order = [];
         this._extra = '';
         this._itemValues = [];
         this._startItem = 0;
@@ -48,6 +50,9 @@ class QrySelectBuilder {
         }
         if (this._limit) {
             qry = qry.concat(` LIMIT ${this._startItem}, ${this._limit}`);
+        }
+        if (this._order.length) {
+            qry = qry.concat(` ORDER BY ${this._order.map((order) => `${order.columns.join(', ')} ${order.direction}`).join(',')}`);
         }
         if (this._extra.length) {
             qry = qry.concat(` ${this._extra}`);
@@ -69,6 +74,18 @@ class QrySelectBuilder {
     };
     limit = (limit) => {
         this._limit = limit;
+        return this;
+    };
+    order = (...orders) => {
+        for (const order of orders) {
+            if (!order.columns.length) {
+                throw new Error('[QrySelectBuilder] Need to set columns to be ordered by.');
+            }
+            this._order.push({
+                direction: order.direction,
+                columns: [...order.columns],
+            });
+        }
         return this;
     };
     startItem = (startItem) => {
@@ -298,4 +315,10 @@ class MySQL {
     };
 }
 
-export { MySQL, QryBuilder };
+var ORDER_DIRECTION;
+(function (ORDER_DIRECTION) {
+    ORDER_DIRECTION["ASC"] = "ASC";
+    ORDER_DIRECTION["DESC"] = "DESC";
+})(ORDER_DIRECTION || (ORDER_DIRECTION = {}));
+
+export { MySQL, ORDER_DIRECTION, QryBuilder };
