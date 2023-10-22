@@ -79,14 +79,16 @@ export default class QrySelectBuilder implements QryBuilderInterface {
     return this;
   };
 
-  order = (direction: ORDER_DIRECTION, columns: string[]) => {
-    if (!columns.length) {
-      throw new Error('[QrySelectBuilder] Need to set columns to be ordered by.');
+  order = (...orders: SelectOrder[]) => {
+    for (const order of orders) {
+      if (!order.columns.length) {
+        throw new Error('[QrySelectBuilder] Need to set columns to be ordered by.');
+      }
+      this._order.push({
+        direction: order.direction,
+        columns: [...order.columns],
+      });
     }
-    this._order.push({
-      direction: direction,
-      columns: columns,
-    });
     return this;
   };
 

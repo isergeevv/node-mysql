@@ -76,14 +76,16 @@ class QrySelectBuilder {
         this._limit = limit;
         return this;
     };
-    order = (direction, columns) => {
-        if (!columns.length) {
-            throw new Error('[QrySelectBuilder] Need to set columns to be ordered by.');
+    order = (...orders) => {
+        for (const order of orders) {
+            if (!order.columns.length) {
+                throw new Error('[QrySelectBuilder] Need to set columns to be ordered by.');
+            }
+            this._order.push({
+                direction: order.direction,
+                columns: [...order.columns],
+            });
         }
-        this._order.push({
-            direction: direction,
-            columns: columns,
-        });
         return this;
     };
     startItem = (startItem) => {

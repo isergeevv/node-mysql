@@ -93,7 +93,7 @@ declare class QrySelectBuilder implements QryBuilderInterface {
     join: (...joins: Join[]) => this;
     where: (...where: string[]) => this;
     limit: (limit: number) => this;
-    order: (direction: ORDER_DIRECTION, columns: string[]) => this;
+    order: (...orders: SelectOrder[]) => this;
     startItem: (startItem: number) => this;
     extra: (extra: string) => this;
     setItemValues: (...items: (string | number)[]) => this;
