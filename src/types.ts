@@ -52,3 +52,8 @@ export interface Join {
   type?: '' | 'LEFT' | 'RIGHT' | 'INNER' | 'OUTER';
   join: string;
 }
+
+export enum ORDER {
+  ASC = 'ASC',
+  DESC = 'DESC',
+}

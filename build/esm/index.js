@@ -1,5 +1,11 @@
 import { escape, createPool } from 'mysql2/promise';
 
+var ORDER;
+(function (ORDER) {
+    ORDER["ASC"] = "ASC";
+    ORDER["DESC"] = "DESC";
+})(ORDER || (ORDER = {}));
+
 const generateParameterizedQuery = (queryString, values = []) => {
     // Parse the query to identify placeholders
     const placeholders = queryString.match(/\?/g);
@@ -22,6 +28,8 @@ class QrySelectBuilder {
     _where;
     _startItem;
     _limit;
+    _orderBy;
+    _order;
     _extra;
     _items;
     _itemValues;
@@ -29,6 +37,8 @@ class QrySelectBuilder {
         this._table = '';
         this._joins = [];
         this._where = [];
+        this._orderBy = [];
+        this._order = ORDER.ASC;
         this._extra = '';
         this._itemValues = [];
         this._startItem = 0;
@@ -69,6 +79,11 @@ class QrySelectBuilder {
     };
     limit = (limit) => {
         this._limit = limit;
+        return this;
+    };
+    order = (order, columns = []) => {
+        this._order = order;
+        this._orderBy.push(...columns);
         return this;
     };
     startItem = (startItem) => {
@@ -298,4 +313,4 @@ class MySQL {
     };
 }
 
-export { MySQL, QryBuilder };
+export { MySQL, ORDER, QryBuilder };

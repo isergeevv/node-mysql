@@ -1,4 +1,4 @@
-import { Join } from './types';
+import { Join, ORDER } from './types';
 import QryBuilderInterface from './interface/QryBuilderInterface';
 import { generateParameterizedQuery } from './util';
 
@@ -8,6 +8,8 @@ export default class QrySelectBuilder implements QryBuilderInterface {
   private _where: string[];
   private _startItem: number;
   private _limit: number;
+  private _orderBy: string[];
+  private _order: string;
   private _extra: string;
   private _items: string[];
   private _itemValues: (string | number)[];
@@ -16,6 +18,8 @@ export default class QrySelectBuilder implements QryBuilderInterface {
     this._table = '';
     this._joins = [];
     this._where = [];
+    this._orderBy = [];
+    this._order = ORDER.ASC;
     this._extra = '';
     this._itemValues = [];
     this._startItem = 0;
@@ -68,6 +72,12 @@ export default class QrySelectBuilder implements QryBuilderInterface {
 
   limit = (limit: number) => {
     this._limit = limit;
+    return this;
+  };
+
+  order = (order: ORDER, columns: string[] = []) => {
+    this._order = order;
+    this._orderBy.push(...columns);
     return this;
   };
 

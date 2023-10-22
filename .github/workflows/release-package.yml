@@ -3,29 +3,12 @@ name: Node.js Package
 on:
   push:
     tags:
-      - "v*"
+      - 'v*'
 
 jobs:
-  release:
+  release-publish:
     runs-on: ubuntu-latest
     permissions: write-all
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@master
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-
-  build:
-    needs: release
-    runs-on: ubuntu-latest
     steps:
       - name: Setup repo
         uses: actions/checkout@v3
@@ -33,25 +16,16 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
+          registry-url: https://npm.pkg.github.com/
       - name: Install dependencies
         run: npm ci
       - name: Run build
         run: npm run build
-
-  publish-gpr:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      contents: read
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          registry-url: https://npm.pkg.github.com/
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish Package
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
-

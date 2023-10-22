@@ -44,6 +44,10 @@ interface Join {
     type?: '' | 'LEFT' | 'RIGHT' | 'INNER' | 'OUTER';
     join: string;
 }
+declare enum ORDER {
+    ASC = "ASC",
+    DESC = "DESC"
+}
 
 declare class MySQL {
     private _pool;
@@ -75,6 +79,8 @@ declare class QrySelectBuilder implements QryBuilderInterface {
     private _where;
     private _startItem;
     private _limit;
+    private _orderBy;
+    private _order;
     private _extra;
     private _items;
     private _itemValues;
@@ -84,6 +90,7 @@ declare class QrySelectBuilder implements QryBuilderInterface {
     join: (...joins: Join[]) => this;
     where: (...where: string[]) => this;
     limit: (limit: number) => this;
+    order: (order: ORDER, columns?: string[]) => this;
     startItem: (startItem: number) => this;
     extra: (extra: string) => this;
     setItemValues: (...items: (string | number)[]) => this;
@@ -128,4 +135,4 @@ declare class QryBuilder {
     static update: (table: string) => QryUpdateBuilder;
 }
 
-export { Delete, DeleteProps, Insert, InsertProps, Join, MySQL, QryBuilder, QryItems, ResultField, ResultRow, Select, SelectProps, SelectReturn, Update, UpdateProps };
+export { Delete, DeleteProps, Insert, InsertProps, Join, MySQL, ORDER, QryBuilder, QryItems, ResultField, ResultRow, Select, SelectProps, SelectReturn, Update, UpdateProps };
