@@ -40,14 +40,14 @@ export default class QrySelectBuilder implements QryBuilderInterface {
       qry = qry.concat(` WHERE ${this._where.join(' AND ')}`);
     }
 
-    if (this._limit) {
-      qry = qry.concat(` LIMIT ${this._startItem}, ${this._limit}`);
-    }
-
     if (this._order.length) {
       qry = qry.concat(
         ` ORDER BY ${this._order.map((order) => `${order.columns.join(', ')} ${order.direction}`).join(',')}`,
       );
+    }
+
+    if (this._limit) {
+      qry = qry.concat(` LIMIT ${this._startItem}, ${this._limit}`);
     }
 
     if (this._extra.length) {
