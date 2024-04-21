@@ -1,7 +1,6 @@
 import * as mysql2_typings_mysql_lib_protocol_packets_FieldPacket from 'mysql2/typings/mysql/lib/protocol/packets/FieldPacket';
-import * as mysql2_typings_mysql_lib_protocol_packets_RowDataPacket from 'mysql2/typings/mysql/lib/protocol/packets/RowDataPacket';
-import * as mysql2_typings_mysql_lib_protocol_packets_OkPacket from 'mysql2/typings/mysql/lib/protocol/packets/OkPacket';
-import { FieldPacket, PoolConnection, PoolOptions, Pool, ResultSetHeader } from 'mysql2/promise';
+import * as mysql2_promise from 'mysql2/promise';
+import { FieldPacket, PoolConnection, PoolOptions, Pool } from 'mysql2/promise';
 
 type ResultRow = Record<string, any>;
 type ResultField = FieldPacket;
@@ -64,7 +63,7 @@ declare class MySQL {
     beginTransaction: () => Promise<PoolConnection>;
     commitTransaction: (connection: PoolConnection) => Promise<void>;
     rollbackTransaction: (connection: PoolConnection) => Promise<void>;
-    qry: (qry: string, items?: QryItems, conn?: PoolConnection) => Promise<[mysql2_typings_mysql_lib_protocol_packets_OkPacket.OkPacket | ResultSetHeader | mysql2_typings_mysql_lib_protocol_packets_RowDataPacket.RowDataPacket[] | ResultSetHeader[] | mysql2_typings_mysql_lib_protocol_packets_RowDataPacket.RowDataPacket[][] | mysql2_typings_mysql_lib_protocol_packets_OkPacket.OkPacket[] | [mysql2_typings_mysql_lib_protocol_packets_RowDataPacket.RowDataPacket[], ResultSetHeader], mysql2_typings_mysql_lib_protocol_packets_FieldPacket.FieldPacket[]]>;
+    qry: (qry: string, items?: QryItems, conn?: PoolConnection) => Promise<[mysql2_promise.QueryResult, mysql2_typings_mysql_lib_protocol_packets_FieldPacket.FieldPacket[]]>;
     select: Select;
     insert: Insert;
     update: Update;
