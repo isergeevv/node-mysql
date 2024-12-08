@@ -1,7 +1,7 @@
 import { escape } from 'mysql2/promise';
-import QryBuilderInterface from './interface/QryBuilderInterface';
+import IQryBuilder from '../interface/IQryBuilder';
 
-export default class QryInsertBuilder implements QryBuilderInterface {
+export default class QryInsertBuilder implements IQryBuilder {
   private _table: string;
   private _set: Record<string, string | number>;
 

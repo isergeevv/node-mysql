@@ -1,8 +1,8 @@
-import { Join, ORDER_DIRECTION, SelectOrder } from './types';
-import QryBuilderInterface from './interface/QryBuilderInterface';
-import { generateParameterizedQuery } from './util';
+import { Join, SelectOrder } from '../types';
+import IQryBuilder from '../interface/IQryBuilder';
+import { generateParameterizedQuery } from '../util';
 
-export default class QrySelectBuilder implements QryBuilderInterface {
+export default class QrySelectBuilder implements IQryBuilder {
   private _table: string;
   private _joins: Join[];
   private _where: string[];

@@ -19,15 +19,11 @@ export interface SelectReturn {
   fields: FieldPacket[];
 }
 
-export type Select = (qry: string | SelectProps, conn?: PoolConnection) => Promise<SelectReturn>;
-
 export interface InsertProps {
   into: string;
   items: Record<string, any>;
   conn?: PoolConnection;
 }
-
-export type Insert = (qry: string | InsertProps, conn?: PoolConnection) => Promise<number>;
 
 export interface UpdateProps {
   table: string;
@@ -37,8 +33,6 @@ export interface UpdateProps {
   conn?: PoolConnection;
 }
 
-export type Update = (qry: string | UpdateProps, conn?: PoolConnection) => Promise<number>;
-
 export interface DeleteProps {
   table: string;
   where: string | string[];
@@ -46,10 +40,16 @@ export interface DeleteProps {
   conn?: PoolConnection;
 }
 
-export type Delete = (qry: string | DeleteProps, conn?: PoolConnection) => Promise<number>;
+export enum TABLE_JOIN_TYPE {
+  NONE = '',
+  LEFT = 'LEFT',
+  RIGHT = 'RIGHT',
+  INNER = 'INNER',
+  OUTER = 'OUTER',
+}
 
 export interface Join {
-  type?: '' | 'LEFT' | 'RIGHT' | 'INNER' | 'OUTER';
+  type?: TABLE_JOIN_TYPE;
   join: string;
 }
 
@@ -61,4 +61,14 @@ export enum ORDER_DIRECTION {
 export interface SelectOrder {
   direction: ORDER_DIRECTION;
   columns: string[];
+}
+
+export interface TableColumnData {
+  name: string;
+  type: string;
+  isAutoIncrement: boolean;
+  isPrimary: boolean;
+  isUnique: boolean;
+  isNull: boolean;
+  default: string;
 }

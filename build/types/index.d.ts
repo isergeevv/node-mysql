@@ -1,6 +1,5 @@
-import * as mysql2_typings_mysql_lib_protocol_packets_FieldPacket from 'mysql2/typings/mysql/lib/protocol/packets/FieldPacket';
-import * as mysql2_promise from 'mysql2/promise';
 import { FieldPacket, PoolConnection, PoolOptions, Pool } from 'mysql2/promise';
+import { QueryResult, FieldPacket as FieldPacket$1, ResultSetHeader } from 'mysql2';
 
 type ResultRow = Record<string, any>;
 type ResultField = FieldPacket;
@@ -17,13 +16,11 @@ interface SelectReturn {
     rows: ResultRow[];
     fields: FieldPacket[];
 }
-type Select = (qry: string | SelectProps, conn?: PoolConnection) => Promise<SelectReturn>;
 interface InsertProps {
     into: string;
     items: Record<string, any>;
     conn?: PoolConnection;
 }
-type Insert = (qry: string | InsertProps, conn?: PoolConnection) => Promise<number>;
 interface UpdateProps {
     table: string;
     set: string | string[];
@@ -31,16 +28,21 @@ interface UpdateProps {
     items?: (string | number)[];
     conn?: PoolConnection;
 }
-type Update = (qry: string | UpdateProps, conn?: PoolConnection) => Promise<number>;
 interface DeleteProps {
     table: string;
     where: string | string[];
     items: any[];
     conn?: PoolConnection;
 }
-type Delete = (qry: string | DeleteProps, conn?: PoolConnection) => Promise<number>;
+declare enum TABLE_JOIN_TYPE {
+    NONE = "",
+    LEFT = "LEFT",
+    RIGHT = "RIGHT",
+    INNER = "INNER",
+    OUTER = "OUTER"
+}
 interface Join {
-    type?: '' | 'LEFT' | 'RIGHT' | 'INNER' | 'OUTER';
+    type?: TABLE_JOIN_TYPE;
     join: string;
 }
 declare enum ORDER_DIRECTION {
@@ -51,32 +53,41 @@ interface SelectOrder {
     direction: ORDER_DIRECTION;
     columns: string[];
 }
-
-declare class MySQL {
-    private _pool;
-    private _lastInsertId;
-    constructor(config: PoolOptions);
-    [Symbol.dispose](): void;
-    get pool(): Pool;
-    get lastInsertId(): number;
-    getConnection: () => Promise<PoolConnection>;
-    beginTransaction: () => Promise<PoolConnection>;
-    commitTransaction: (connection: PoolConnection) => Promise<void>;
-    rollbackTransaction: (connection: PoolConnection) => Promise<void>;
-    qry: (qry: string, items?: QryItems, conn?: PoolConnection) => Promise<[mysql2_promise.QueryResult, mysql2_typings_mysql_lib_protocol_packets_FieldPacket.FieldPacket[]]>;
-    select: Select;
-    insert: Insert;
-    update: Update;
-    delete: Delete;
-    checkString: (value: string | number) => string | number;
-    close: () => void;
+interface TableColumnData {
+    name: string;
+    type: string;
+    isAutoIncrement: boolean;
+    isPrimary: boolean;
+    isUnique: boolean;
+    isNull: boolean;
+    default: string;
 }
 
-interface QryBuilderInterface {
+interface IQryBuilder {
     export(): string;
 }
 
-declare class QrySelectBuilder implements QryBuilderInterface {
+declare class QryDeleteBuilder implements IQryBuilder {
+    private _table;
+    private _where;
+    private _itemValues;
+    constructor();
+    export(): string;
+    from: (table: string) => this;
+    where: (...where: string[]) => this;
+    setItemValues: (...items: (string | number)[]) => this;
+}
+
+declare class QryInsertBuilder implements IQryBuilder {
+    private _table;
+    private _set;
+    constructor(items?: Record<string, string | number>);
+    export(): string;
+    into: (table: string) => this;
+    set: (items: Record<string, string | number>) => this;
+}
+
+declare class QrySelectBuilder implements IQryBuilder {
     private _table;
     private _joins;
     private _where;
@@ -98,27 +109,20 @@ declare class QrySelectBuilder implements QryBuilderInterface {
     setItemValues: (...items: (string | number)[]) => this;
 }
 
-declare class QryInsertBuilder implements QryBuilderInterface {
+declare class QryTableCreateBuilder implements IQryBuilder {
     private _table;
-    private _set;
-    constructor(items?: Record<string, string | number>);
+    private _columns;
+    constructor(table: string);
     export(): string;
-    into: (table: string) => this;
-    set: (items: Record<string, string | number>) => this;
+    columns(columnsData: Partial<TableColumnData>[]): this;
 }
 
-declare class QryDeleteBuilder implements QryBuilderInterface {
-    private _table;
-    private _where;
-    private _itemValues;
-    constructor();
-    export(): string;
-    from: (table: string) => this;
-    where: (...where: string[]) => this;
-    setItemValues: (...items: (string | number)[]) => this;
+declare class QryTableBuilder {
+    static exists(table: string): string;
+    static create(table: string): QryTableCreateBuilder;
 }
 
-declare class QryUpdateBuilder implements QryBuilderInterface {
+declare class QryUpdateBuilder implements IQryBuilder {
     private _table;
     private _where;
     private _items;
@@ -130,11 +134,42 @@ declare class QryUpdateBuilder implements QryBuilderInterface {
     setItemValues: (...items: (string | number)[]) => this;
 }
 
-declare class QryBuilder {
-    static select: (...items: string[]) => QrySelectBuilder;
-    static insert: (items?: Record<string, string | number>) => QryInsertBuilder;
-    static delete: () => QryDeleteBuilder;
-    static update: (table: string) => QryUpdateBuilder;
+declare class QryResult {
+    private _result;
+    constructor(result: [QueryResult, FieldPacket$1[]]);
+    get affectedRows(): number;
+    get insertId(): number;
+    get rows(): ResultRow[];
+    get headers(): ResultSetHeader;
+    get fields(): FieldPacket$1[];
+    get raw(): [QueryResult, FieldPacket$1[]];
 }
 
-export { Delete, DeleteProps, Insert, InsertProps, Join, MySQL, ORDER_DIRECTION, QryBuilder, QryItems, ResultField, ResultRow, Select, SelectOrder, SelectProps, SelectReturn, Update, UpdateProps };
+declare class MySQL {
+    private _pool;
+    private _lastInsertId;
+    constructor(config: PoolOptions);
+    [Symbol.dispose](): void;
+    get pool(): Pool;
+    get lastInsertId(): number;
+    getConnection(): Promise<PoolConnection>;
+    beginTransaction(): Promise<PoolConnection>;
+    commitTransaction(connection: PoolConnection): Promise<void>;
+    rollbackTransaction(connection: PoolConnection): Promise<void>;
+    qry(qry: string, items?: QryItems, conn?: PoolConnection): Promise<QryResult>;
+    select(qry: string | SelectProps, conn?: PoolConnection): Promise<QryResult>;
+    insert(qry: string | InsertProps, conn?: PoolConnection): Promise<number>;
+    update(qry: string | UpdateProps, conn?: PoolConnection): Promise<number>;
+    delete(qry: string | DeleteProps, conn?: PoolConnection | undefined): Promise<number>;
+    checkString(value: string | number): string | number;
+    close(): void;
+}
+
+declare class QryBuilder {
+    static select(...items: string[]): QrySelectBuilder;
+    static insert(items?: Record<string, string | number>): QryInsertBuilder;
+    static delete(): QryDeleteBuilder;
+    static update(table: string): QryUpdateBuilder;
+}
+
+export { DeleteProps, InsertProps, Join, MySQL, ORDER_DIRECTION, QryBuilder, QryDeleteBuilder, QryInsertBuilder, QryItems, QrySelectBuilder, QryTableBuilder, QryTableCreateBuilder, QryUpdateBuilder, ResultField, ResultRow, SelectOrder, SelectProps, SelectReturn, TABLE_JOIN_TYPE, TableColumnData, UpdateProps };
