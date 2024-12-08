@@ -2,6 +2,20 @@
 
 var promise = require('mysql2/promise');
 
+exports.TABLE_JOIN_TYPE = void 0;
+(function (TABLE_JOIN_TYPE) {
+    TABLE_JOIN_TYPE["NONE"] = "";
+    TABLE_JOIN_TYPE["LEFT"] = "LEFT";
+    TABLE_JOIN_TYPE["RIGHT"] = "RIGHT";
+    TABLE_JOIN_TYPE["INNER"] = "INNER";
+    TABLE_JOIN_TYPE["OUTER"] = "OUTER";
+})(exports.TABLE_JOIN_TYPE || (exports.TABLE_JOIN_TYPE = {}));
+exports.ORDER_DIRECTION = void 0;
+(function (ORDER_DIRECTION) {
+    ORDER_DIRECTION["ASC"] = "ASC";
+    ORDER_DIRECTION["DESC"] = "DESC";
+})(exports.ORDER_DIRECTION || (exports.ORDER_DIRECTION = {}));
+
 const generateParameterizedQuery = (queryString, values = []) => {
     // Parse the query to identify placeholders
     const placeholders = queryString.match(/\?/g);
@@ -17,6 +31,62 @@ const generateParameterizedQuery = (queryString, values = []) => {
     });
     return preparedQuery;
 };
+
+class QryDeleteBuilder {
+    _table;
+    _where;
+    _itemValues;
+    constructor() {
+        this._table = '';
+        this._where = [];
+        this._itemValues = [];
+    }
+    export() {
+        if (!this._table.length) {
+            throw new Error('[QryDeleteBuilder] Missing table.');
+        }
+        const qry = `DELETE FROM ${this._table}` + (this._where.length ? ` WHERE ${this._where.join(' AND ')}` : '') + ';';
+        return generateParameterizedQuery(qry, this._itemValues);
+    }
+    from = (table) => {
+        this._table = table;
+        return this;
+    };
+    where = (...where) => {
+        this._where = [...where];
+        return this;
+    };
+    setItemValues = (...items) => {
+        this._itemValues = [...items];
+        return this;
+    };
+}
+
+class QryInsertBuilder {
+    _table;
+    _set;
+    constructor(items) {
+        this._table = '';
+        this._set = items || {};
+    }
+    export() {
+        if (!this._table.length) {
+            throw new Error('[QryInsertBuilder] Missing table.');
+        }
+        const keys = Object.keys(this._set);
+        return (`INSERT INTO ${this._table}` +
+            (keys.length ? ` SET ${keys.map((key) => `${key} = ${promise.escape(this._set[key])}`).join(', ')}` : '') +
+            ';');
+    }
+    into = (table) => {
+        this._table = table;
+        return this;
+    };
+    set = (items) => {
+        this._set = items;
+        return this;
+    };
+}
 
 class QrySelectBuilder {
     _table;
@@ -107,60 +177,58 @@ class QrySelectBuilder {
     };
 }
 
-class QryInsertBuilder {
+class QryTableCreateBuilder {
     _table;
-    _set;
-    constructor(items) {
-        this._table = '';
-        this._set = items || {};
+    _columns;
+    constructor(table) {
+        this._table = table;
+        this._columns = [];
     }
     export() {
         if (!this._table.length) {
-            throw new Error('[QryInsertBuilder] Missing table.');
+            throw new Error('[QryTableCreateBuilder] Missing table.');
         }
-        const keys = Object.keys(this._set);
-        return (`INSERT INTO ${this._table}` +
-            (keys.length ? ` SET ${keys.map((key) => `${key} = ${promise.escape(this._set[key])}`).join(', ')}` : '') +
-            ';');
+        return `CREATE TABLE ${this._table} (
+      ${this._columns.map((columnData) => {
+            let c = '';
+            if (!columnData.name) {
+                throw new Error(`[QryTableCreateBuilder] Column missing name.`);
+            }
+            c = c.concat(columnData.name);
+            if (!columnData.type) {
+                throw new Error(`[QryTableCreateBuilder] Column missing type.`);
+            }
+            c = c.concat(` ${columnData.type}`);
+            if (columnData.isAutoIncrement) {
+                c = c.concat(` AUTO_INCREMENT`);
+            }
+            if (columnData.isPrimary) {
+                c = c.concat(` PRIMARY KEY`);
+            }
+            if (columnData.isUnique) {
+                c = c.concat(` UNIQUE`);
+            }
+            c = c.concat(columnData.isNull ? ` NULL` : ` NOT NULL`);
+            if (columnData.default) {
+                c = c.concat(` DEFAULT ${columnData.default}`);
+            }
+            return c;
+        })}
+    );`;
     }
-    into = (table) => {
-        this._table = table;
+    columns(columnsData) {
+        this._columns = columnsData;
         return this;
-    };
-    set = (items) => {
-        this._set = items;
-        return this;
-    };
+    }
 }
 
-class QryDeleteBuilder {
-    _table;
-    _where;
-    _itemValues;
-    constructor() {
-        this._table = '';
-        this._where = [];
-        this._itemValues = [];
+class QryTableBuilder {
+    static exists(table) {
+        return `SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = '${table}';`;
     }
-    export() {
-        if (!this._table.length) {
-            throw new Error('[QryDeleteBuilder] Missing table.');
-        }
-        const qry = `DELETE FROM ${this._table}` + (this._where.length ? ` WHERE ${this._where.join(' AND ')}` : '') + ';';
-        return generateParameterizedQuery(qry, this._itemValues);
+    static create(table) {
+        return new QryTableCreateBuilder(table);
     }
-    from = (table) => {
-        this._table = table;
-        return this;
-    };
-    where = (...where) => {
-        this._where = [...where];
-        return this;
-    };
-    setItemValues = (...items) => {
-        this._itemValues = [...items];
-        return this;
-    };
 }
 
 class QryUpdateBuilder {
@@ -201,18 +269,43 @@ class QryUpdateBuilder {
 }
 
 class QryBuilder {
-    static select = (...items) => {
+    static select(...items) {
         return new QrySelectBuilder(...items);
-    };
-    static insert = (items) => {
+    }
+    static insert(items) {
         return new QryInsertBuilder(items);
-    };
-    static delete = () => {
+    }
+    static delete() {
         return new QryDeleteBuilder();
-    };
-    static update = (table) => {
+    }
+    static update(table) {
         return new QryUpdateBuilder(table);
-    };
+    }
+}
+
+class QryResult {
+    _result;
+    constructor(result) {
+        this._result = result;
+    }
+    get affectedRows() {
+        return this._result[0].affectedRows ?? 0;
+    }
+    get insertId() {
+        return this._result[0].insertId ?? 0;
+    }
+    get rows() {
+        return this._result[0];
+    }
+    get headers() {
+        return this._result[0];
+    }
+    get fields() {
+        return this._result[1];
+    }
+    get raw() {
+        return this._result;
+    }
 }
 
 class MySQL {
@@ -231,39 +324,39 @@ class MySQL {
     get lastInsertId() {
         return this._lastInsertId;
     }
-    getConnection = async () => {
+    async getConnection() {
         return await this._pool.getConnection();
-    };
-    beginTransaction = async () => {
+    }
+    async beginTransaction() {
         const connection = await this.getConnection();
         await connection.beginTransaction();
         return connection;
-    };
-    commitTransaction = async (connection) => {
+    }
+    async commitTransaction(connection) {
         if (!connection)
             return;
         connection.commit();
         connection.release();
-    };
-    rollbackTransaction = async (connection) => {
+    }
+    async rollbackTransaction(connection) {
         if (!connection)
             return;
         connection.rollback();
         connection.release();
-    };
-    qry = async (qry, items = [], conn) => {
+    }
+    async qry(qry, items = [], conn) {
         try {
             const connection = conn || (await this.getConnection());
             const result = await connection.query(qry, items);
             if (!conn)
                 connection.release();
-            return result;
+            return new QryResult(result);
         }
         catch (e) {
             throw new Error(`Error: ${e.message}.\nQuery: ${qry}\nItems: ${items.join(', ')}`);
         }
-    };
-    select = async (qry, conn) => {
+    }
+    async select(qry, conn) {
         const sql = typeof qry === 'string'
             ? qry
             : QryBuilder.select(...(qry.select ? (Array.isArray(qry.select) ? qry.select : [qry.select]) : ['*']))
@@ -273,21 +366,17 @@ class MySQL {
                 .extra(qry.extra || '')
                 .setItemValues(...(qry.items || []))
                 .export();
-        const result = await this.qry(sql, conn);
-        return {
-            rows: result[0],
-            fields: result[1],
-        };
-    };
-    insert = async (qry, conn) => {
+        return await this.qry(sql, conn);
+    }
+    async insert(qry, conn) {
         const sql = typeof qry === 'string' ? qry : QryBuilder.insert(qry.items).into(qry.into).export();
         const result = await this.qry(sql, conn);
-        const insertId = result && result[0] ? result[0].insertId : 0;
+        const insertId = result.insertId;
         if (insertId)
             this._lastInsertId = insertId;
         return insertId;
-    };
-    update = async (qry, conn) => {
+    }
+    async update(qry, conn) {
         const sql = typeof qry === 'string'
             ? qry
             : QryBuilder.update(qry.table)
@@ -296,9 +385,9 @@ class MySQL {
                 .setItemValues(...(qry.items || []))
                 .export();
         const result = await this.qry(sql, conn);
-        return result && result[0] ? result[0].affectedRows : 0;
-    };
-    delete = async (qry, conn) => {
+        return result.affectedRows;
+    }
+    async delete(qry, conn) {
         const sql = typeof qry === 'string'
             ? qry
             : QryBuilder.delete()
@@ -307,21 +396,21 @@ class MySQL {
                 .setItemValues(...qry.items)
                 .export();
         const result = await this.qry(sql, conn);
-        return result && result[0] ? result[0].affectedRows : 0;
-    };
-    checkString = (value) => {
+        return result.affectedRows;
+    }
+    checkString(value) {
         return typeof value == 'string' ? `'${value}'` : value;
-    };
-    close = () => {
+    }
+    close() {
         this._pool.end();
-    };
+    }
 }
-
-exports.ORDER_DIRECTION = void 0;
-(function (ORDER_DIRECTION) {
-    ORDER_DIRECTION["ASC"] = "ASC";
-    ORDER_DIRECTION["DESC"] = "DESC";
-})(exports.ORDER_DIRECTION || (exports.ORDER_DIRECTION = {}));
 
 exports.MySQL = MySQL;
 exports.QryBuilder = QryBuilder;
+exports.QryDeleteBuilder = QryDeleteBuilder;
+exports.QryInsertBuilder = QryInsertBuilder;
+exports.QrySelectBuilder = QrySelectBuilder;
+exports.QryTableBuilder = QryTableBuilder;
+exports.QryTableCreateBuilder = QryTableCreateBuilder;
+exports.QryUpdateBuilder = QryUpdateBuilder;

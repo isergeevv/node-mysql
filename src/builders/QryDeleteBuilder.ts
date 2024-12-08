@@ -1,7 +1,7 @@
-import QryBuilderInterface from './interface/QryBuilderInterface';
-import { generateParameterizedQuery } from './util';
+import IQryBuilder from '../interface/IQryBuilder';
+import { generateParameterizedQuery } from '../util';
 
-export default class QryDeleteBuilder implements QryBuilderInterface {
+export default class QryDeleteBuilder implements IQryBuilder {
   private _table: string;
   private _where: string[];
   private _itemValues: (string | number)[];

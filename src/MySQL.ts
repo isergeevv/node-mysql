@@ -1,6 +1,8 @@
 import { createPool, Pool, PoolConnection, PoolOptions, ResultSetHeader } from 'mysql2/promise';
-import { Delete, Insert, QryItems, ResultField, ResultRow, Select, Update } from './types';
+import { DeleteProps, InsertProps, QryItems, ResultField, ResultRow, SelectProps, UpdateProps } from './types';
 import QryBuilder from './QryBuilder';
+import QryTableBuilder from './QryTableBuilder';
+import QryResult from './QryResult';
 
 export default class MySQL {
   private _pool: Pool;
@@ -22,40 +24,42 @@ export default class MySQL {
     return this._lastInsertId;
   }
 
-  getConnection = async () => {
+  async getConnection() {
     return await this._pool.getConnection();
-  };
+  }
 
-  beginTransaction = async () => {
+  async beginTransaction() {
     const connection: PoolConnection = await this.getConnection();
     await connection.beginTransaction();
     return connection;
-  };
+  }
 
-  commitTransaction = async (connection: PoolConnection) => {
+  async commitTransaction(connection: PoolConnection) {
     if (!connection) return;
     connection.commit();
     connection.release();
-  };
+  }
 
-  rollbackTransaction = async (connection: PoolConnection) => {
+  async rollbackTransaction(connection: PoolConnection) {
     if (!connection) return;
     connection.rollback();
     connection.release();
-  };
+  }
 
-  qry = async (qry: string, items: QryItems = [], conn?: PoolConnection) => {
+  async qry(qry: string, items: QryItems = [], conn?: PoolConnection) {
     try {
       const connection = conn || (await this.getConnection());
       const result = await connection.query(qry, items);
+
       if (!conn) connection.release();
-      return result;
+
+      return new QryResult(result);
     } catch (e: any) {
       throw new Error(`Error: ${e.message}.\nQuery: ${qry}\nItems: ${items.join(', ')}`);
     }
-  };
+  }
 
-  select: Select = async (qry, conn) => {
+  async select(qry: string | SelectProps, conn?: PoolConnection) {
     const sql =
       typeof qry === 'string'
         ? qry
@@ -67,25 +71,22 @@ export default class MySQL {
             .setItemValues(...(qry.items || []))
             .export();
 
-    const result = await this.qry(sql, conn);
+    return await this.qry(sql, conn);
+  }
 
-    return {
-      rows: result[0] as ResultRow[],
-      fields: result[1] as ResultField[],
-    };
-  };
-
-  insert: Insert = async (qry, conn) => {
+  async insert(qry: string | InsertProps, conn?: PoolConnection) {
     const sql = typeof qry === 'string' ? qry : QryBuilder.insert(qry.items).into(qry.into).export();
 
     const result = await this.qry(sql, conn);
-    const insertId = result && result[0] ? (result[0] as ResultSetHeader).insertId : 0;
+
+    const insertId = result.insertId;
+
     if (insertId) this._lastInsertId = insertId;
 
     return insertId;
-  };
+  }
 
-  update: Update = async (qry, conn) => {
+  async update(qry: string | UpdateProps, conn?: PoolConnection) {
     const sql =
       typeof qry === 'string'
         ? qry
@@ -96,10 +97,11 @@ export default class MySQL {
             .export();
 
     const result = await this.qry(sql, conn);
-    return result && result[0] ? (result[0] as ResultSetHeader).affectedRows : 0;
-  };
 
-  delete: Delete = async (qry, conn) => {
+    return result.affectedRows;
+  }
+
+  async delete(qry: string | DeleteProps, conn?: PoolConnection | undefined) {
     const sql =
       typeof qry === 'string'
         ? qry
@@ -111,14 +113,14 @@ export default class MySQL {
 
     const result = await this.qry(sql, conn);
 
-    return result && result[0] ? (result[0] as ResultSetHeader).affectedRows : 0;
-  };
+    return result.affectedRows;
+  }
 
-  checkString = (value: string | number) => {
+  checkString(value: string | number) {
     return typeof value == 'string' ? `'${value}'` : value;
-  };
+  }
 
-  close = () => {
+  close() {
     this._pool.end();
-  };
+  }
 }
