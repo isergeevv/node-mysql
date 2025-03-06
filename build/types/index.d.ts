@@ -25,7 +25,7 @@ interface UpdateProps {
     table: string;
     set: string | string[];
     where?: string | string[];
-    items?: (string | number)[];
+    items?: (string | number | bigint | boolean)[];
     conn?: PoolConnection;
 }
 interface DeleteProps {
@@ -131,7 +131,7 @@ declare class QryUpdateBuilder implements IQryBuilder {
     export(): string;
     set: (...items: string[]) => this;
     where: (...where: string[]) => this;
-    setItemValues: (...items: (string | number)[]) => this;
+    setItemValues: (...items: (string | number | bigint | boolean)[]) => this;
 }
 
 declare class QryResult {

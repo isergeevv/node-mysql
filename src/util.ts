@@ -1,6 +1,9 @@
 import { escape } from 'mysql2/promise';
 
-export const generateParameterizedQuery = (queryString: string, values: (string | number)[] = []) => {
+export const generateParameterizedQuery = (
+  queryString: string,
+  values: (string | number | bigint | boolean)[] = [],
+) => {
   // Parse the query to identify placeholders
   const placeholders = queryString.match(/\?/g);
 

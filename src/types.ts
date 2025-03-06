@@ -29,7 +29,7 @@ export interface UpdateProps {
   table: string;
   set: string | string[];
   where?: string | string[];
-  items?: (string | number)[];
+  items?: (string | number | bigint | boolean)[];
   conn?: PoolConnection;
 }
 

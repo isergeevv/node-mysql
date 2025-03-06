@@ -5,7 +5,7 @@ export default class QryUpdateBuilder implements IQryBuilder {
   private _table: string;
   private _where: string[];
   private _items: string[];
-  private _itemValues: (string | number)[];
+  private _itemValues: (string | number | bigint | boolean)[];
 
   constructor(table: string) {
     this._table = table;
@@ -40,7 +40,7 @@ export default class QryUpdateBuilder implements IQryBuilder {
     return this;
   };
 
-  setItemValues = (...items: (string | number)[]) => {
+  setItemValues = (...items: (string | number | bigint | boolean)[]) => {
     this._itemValues = [...items];
     return this;
   };
