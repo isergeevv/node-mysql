@@ -1,5 +1,4 @@
-import { escape } from 'mysql2/promise';
-import IQryBuilder from '../interface/IQryBuilder';
+import type { IConnection, IQryBuilder } from '../interfaces';
 
 export default class QryInsertBuilder implements IQryBuilder {
   private _table: string;
@@ -8,20 +7,6 @@ export default class QryInsertBuilder implements IQryBuilder {
   constructor(items?: Record<string, string | number>) {
     this._table = '';
     this._set = items || {};
-  }
-
-  export() {
-    if (!this._table.length) {
-      throw new Error('[QryInsertBuilder] Missing table.');
-    }
-
-    const keys = Object.keys(this._set);
-
-    return (
-      `INSERT INTO ${this._table}` +
-      (keys.length ? ` SET ${keys.map((key) => `${key} = ${escape(this._set[key])}`).join(', ')}` : '') +
-      ';'
-    );
   }
 
   into = (table: string) => {
@@ -33,4 +18,18 @@ export default class QryInsertBuilder implements IQryBuilder {
     this._set = items;
     return this;
   };
+
+  export(conn: IConnection): string {
+    if (!this._table.length) {
+      throw new Error('[QryInsertBuilder] Missing table.');
+    }
+
+    const keys = Object.keys(this._set);
+
+    return (
+      `INSERT INTO ${this._table}` +
+      (keys.length ? ` SET ${keys.map((key) => `${key} = ${conn.escape(this._set[key])}`).join(', ')}` : '') +
+      ';'
+    );
+  }
 }

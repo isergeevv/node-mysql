@@ -63,28 +63,64 @@ interface TableColumnData {
     default: string;
 }
 
-interface IQryBuilder {
-    export(): string;
+interface IConnection {
+    query(qry: string, items: any[]): Promise<IQryResult>;
+    select(qry: string | SelectProps): Promise<IQrySelectResult>;
+    insert(qry: string | InsertProps): Promise<IQryInsertResult>;
+    update(qry: string | UpdateProps): Promise<IQryUpdateResult>;
+    delete(qry: string | DeleteProps): Promise<IQryDeleteResult>;
+    escape(value: unknown): string;
+    generateParameterizedQuery(queryString: string, values?: (string | number)[]): string;
 }
+interface IDatabaseConnection extends IConnection {
+    commitTransaction(): Promise<void>;
+    rollbackTransaction(): Promise<void>;
+    release(): void;
+}
+interface IDatabase extends IConnection {
+    getConnection(): Promise<IDatabaseConnection>;
+    beginTransaction(): Promise<IDatabaseConnection>;
+    close(): void;
+}
+interface IQryBuilder {
+    export(conn: IConnection): string;
+}
+interface IBaseQryResult {
+    get raw(): [QueryResult, FieldPacket$1[]];
+}
+interface IQrySelectResult extends IBaseQryResult {
+    get rows(): ResultRow[];
+    get fields(): ResultField[];
+}
+interface IQryUpdateResult extends IBaseQryResult {
+    get affectedRows(): number;
+}
+interface IQryDeleteResult extends IBaseQryResult {
+    get affectedRows(): number;
+}
+interface IQryInsertResult extends IBaseQryResult {
+    get insertId(): number;
+}
+type IQryResult = IBaseQryResult & IQrySelectResult & IQryUpdateResult & IQryDeleteResult & IQryInsertResult;
 
 declare class QryDeleteBuilder implements IQryBuilder {
     private _table;
     private _where;
     private _itemValues;
     constructor();
-    export(): string;
     from: (table: string) => this;
     where: (...where: string[]) => this;
     setItemValues: (...items: (string | number)[]) => this;
+    export(conn: IConnection): string;
 }
 
 declare class QryInsertBuilder implements IQryBuilder {
     private _table;
     private _set;
     constructor(items?: Record<string, string | number>);
-    export(): string;
     into: (table: string) => this;
     set: (items: Record<string, string | number>) => this;
+    export(conn: IConnection): string;
 }
 
 declare class QrySelectBuilder implements IQryBuilder {
@@ -108,21 +144,21 @@ declare class QrySelectBuilder implements IQryBuilder {
     startItem: (startItem: number) => this;
     extra: (extra: string) => this;
     setItemValues: (...items: (string | number)[]) => this;
-    export(): string;
+    export(conn: IConnection): string;
 }
 
 declare class QryTableCreateBuilder implements IQryBuilder {
     private _table;
     private _columns;
     constructor(table: string);
-    export(): string;
     columns(columnsData: Partial<TableColumnData>[]): this;
+    export(): string;
 }
 
 declare class QryTableExistsBuilder implements IQryBuilder {
     private _table;
     constructor(table: string);
-    export(): string;
+    export(conn: IConnection): string;
 }
 
 declare class QryTableBuilder {
@@ -136,24 +172,32 @@ declare class QryUpdateBuilder implements IQryBuilder {
     private _items;
     private _itemValues;
     constructor(table: string);
-    export(): string;
     set: (...items: string[]) => this;
     where: (...where: string[]) => this;
     setItemValues: (...items: (string | number)[]) => this;
+    export(conn: IConnection): string;
 }
 
-declare class QryResult {
+declare class QryResult implements IQryResult {
     private _result;
     constructor(result: [QueryResult, FieldPacket$1[]]);
     get affectedRows(): number;
     get insertId(): number;
     get rows(): ResultRow[];
     get headers(): ResultSetHeader;
-    get fields(): FieldPacket$1[];
+    get fields(): ResultField[];
     get raw(): [QueryResult, FieldPacket$1[]];
 }
 
-declare class DatabaseConnection {
+declare class QrySelectResult implements IQrySelectResult {
+    private _result;
+    constructor(result: [QueryResult, FieldPacket$1[]]);
+    get rows(): ResultRow[];
+    get fields(): ResultField[];
+    get raw(): [QueryResult, FieldPacket$1[]];
+}
+
+declare class DatabaseConnection implements IDatabaseConnection {
     private _connection;
     constructor(connection: PoolConnection);
     get connection(): PoolConnection;
@@ -161,26 +205,30 @@ declare class DatabaseConnection {
     beginTransaction(): Promise<void>;
     commitTransaction(): Promise<void>;
     rollbackTransaction(): Promise<void>;
-    query(qry: string, items?: any[]): Promise<any>;
-    select(qry: string | SelectProps): Promise<any[]>;
-    insert(qry: string | InsertProps): Promise<number>;
-    update(qry: string | UpdateProps): Promise<any>;
-    delete(qry: string | DeleteProps): Promise<any>;
+    query(qry: string, items?: any[]): Promise<IQryResult>;
+    select(qry: string | SelectProps): Promise<IQrySelectResult>;
+    insert(qry: string | InsertProps): Promise<IQryInsertResult>;
+    update(qry: string | UpdateProps): Promise<IQryUpdateResult>;
+    delete(qry: string | DeleteProps): Promise<IQryDeleteResult>;
+    escape(value: unknown): string;
+    generateParameterizedQuery(queryString: string, values?: (string | number)[]): string;
     release(): void;
 }
 
-declare class Database {
+declare class Database implements IDatabase {
     private _pool;
     constructor(mysqlPool: Pool);
     [Symbol.dispose](): void;
     get pool(): Pool;
     getConnection(): Promise<DatabaseConnection>;
     beginTransaction(): Promise<DatabaseConnection>;
-    query(qry: string, items?: QryItems): Promise<QryResult>;
-    select(qry: string | SelectProps): Promise<any[]>;
-    insert(qry: string | InsertProps): Promise<number>;
-    update(qry: string | UpdateProps): Promise<any>;
-    delete(qry: string | DeleteProps): Promise<any>;
+    query(qry: string, items?: QryItems): Promise<IQryResult>;
+    select(qry: string | SelectProps): Promise<IQrySelectResult>;
+    insert(qry: string | InsertProps): Promise<IQryInsertResult>;
+    update(qry: string | UpdateProps): Promise<IQryUpdateResult>;
+    delete(qry: string | DeleteProps): Promise<IQryDeleteResult>;
+    escape(value: unknown): string;
+    generateParameterizedQuery(queryString: string, values?: (string | number)[]): string;
     close(): void;
 }
 
@@ -191,4 +239,4 @@ declare class QryBuilder {
     static update(table: string): QryUpdateBuilder;
 }
 
-export { Database, DeleteProps, InsertProps, Join, ORDER_DIRECTION, QryBuilder, QryDeleteBuilder, QryInsertBuilder, QryItems, QrySelectBuilder, QryTableBuilder, QryTableCreateBuilder, QryUpdateBuilder, ResultField, ResultRow, SelectOrder, SelectProps, SelectReturn, TABLE_JOIN_TYPE, TableColumnData, UpdateProps };
+export { Database, DeleteProps, InsertProps, Join, ORDER_DIRECTION, QryBuilder, QryDeleteBuilder, QryInsertBuilder, QryItems, QryResult, QrySelectBuilder, QrySelectResult, QryTableBuilder, QryTableCreateBuilder, QryUpdateBuilder, ResultField, ResultRow, SelectOrder, SelectProps, SelectReturn, TABLE_JOIN_TYPE, TableColumnData, UpdateProps };

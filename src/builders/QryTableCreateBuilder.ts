@@ -1,4 +1,4 @@
-import IQryBuilder from '../interface/IQryBuilder';
+import { IQryBuilder } from '../interfaces';
 import { TableColumnData } from '../types';
 
 export default class QryTableCreateBuilder implements IQryBuilder {
@@ -8,6 +8,11 @@ export default class QryTableCreateBuilder implements IQryBuilder {
   constructor(table: string) {
     this._table = table;
     this._columns = [];
+  }
+
+  columns(columnsData: Partial<TableColumnData>[]) {
+    this._columns = columnsData;
+    return this;
   }
 
   export() {
@@ -52,10 +57,5 @@ export default class QryTableCreateBuilder implements IQryBuilder {
         return c;
       })}
     );`;
-  }
-
-  columns(columnsData: Partial<TableColumnData>[]) {
-    this._columns = columnsData;
-    return this;
   }
 }

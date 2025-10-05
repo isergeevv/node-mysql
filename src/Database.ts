@@ -1,9 +1,9 @@
 import type { Pool } from 'mysql2/promise';
 import type { DeleteProps, InsertProps, QryItems, SelectProps, UpdateProps } from './types';
-import QryResult from './results/QryResult';
+import type { IDatabase, IQryResult, IQrySelectResult } from './interfaces';
 import DatabaseConnection from './DatabaseConnection';
 
-export default class Database {
+export default class Database implements IDatabase {
   private _pool: Pool;
 
   constructor(mysqlPool: Pool) {
@@ -29,15 +29,15 @@ export default class Database {
     return connection;
   }
 
-  async query(qry: string, items: QryItems = []): Promise<QryResult> {
+  async query(qry: string, items: QryItems = []): Promise<IQryResult> {
     const connection: DatabaseConnection = await this.getConnection();
     const result = await connection.query(qry, items);
     connection.release();
 
-    return new QryResult(result);
+    return result;
   }
 
-  async select(qry: string | SelectProps): Promise<any[]> {
+  async select(qry: string | SelectProps): Promise<IQrySelectResult> {
     const connection: DatabaseConnection = await this.getConnection();
     const result = await connection.select(qry);
     connection.release();
@@ -67,6 +67,28 @@ export default class Database {
     connection.release();
 
     return result;
+  }
+
+  escape(value: unknown): string {
+    return this._pool.escape(value);
+  }
+
+  generateParameterizedQuery(queryString: string, values: (string | number)[] = []): string {
+    const placeholders = queryString.match(/\?/g);
+
+    if (!placeholders) return queryString;
+
+    if (placeholders.length !== values.length) {
+      throw new Error('[util->generateParameterizedQuery] Mismatch between placeholders and values.');
+    }
+
+    // Prepare the statement with placeholders
+    const preparedQuery = queryString.replace(/\?/g, () => {
+      // Ensure proper escaping and formatting based on data type
+      return this.escape(values.shift());
+    });
+
+    return preparedQuery;
   }
 
   close() {

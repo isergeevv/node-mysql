@@ -1,5 +1,4 @@
-import { escape } from 'mysql2/promise';
-import IQryBuilder from '../interface/IQryBuilder';
+import type { IConnection, IQryBuilder } from '../interfaces';
 
 export default class QryTableExistsBuilder implements IQryBuilder {
   private _table: string;
@@ -8,12 +7,12 @@ export default class QryTableExistsBuilder implements IQryBuilder {
     this._table = table;
   }
 
-  export() {
+  export(conn: IConnection): string {
     if (!this._table.length) {
       throw new Error('[QryTableExistsBuilder] Missing table.');
     }
 
-    return `SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ${escape(
+    return `SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ${conn.escape(
       this._table,
     )};`;
   }

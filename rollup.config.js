@@ -10,7 +10,7 @@ const config = [
       format: 'es',
     },
     plugins: [typescript(), resolve()],
-    external: ['mysql2/promise'],
+    external: [],
   },
   {
     input: 'src/index.ts',
@@ -19,7 +19,7 @@ const config = [
       format: 'cjs',
     },
     plugins: [typescript(), resolve()],
-    external: ['mysql2/promise'],
+    external: [],
   },
   {
     input: 'src/index.ts',
@@ -28,7 +28,7 @@ const config = [
       format: 'es',
     },
     plugins: [dts()],
-    external: ['mysql2/promise'],
+    external: [],
   },
 ];
 

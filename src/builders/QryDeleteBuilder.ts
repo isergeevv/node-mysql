@@ -1,5 +1,4 @@
-import IQryBuilder from '../interface/IQryBuilder';
-import { generateParameterizedQuery } from '../util';
+import type { IConnection, IQryBuilder } from '../interfaces';
 
 export default class QryDeleteBuilder implements IQryBuilder {
   private _table: string;
@@ -10,16 +9,6 @@ export default class QryDeleteBuilder implements IQryBuilder {
     this._table = '';
     this._where = [];
     this._itemValues = [];
-  }
-
-  export() {
-    if (!this._table.length) {
-      throw new Error('[QryDeleteBuilder] Missing table.');
-    }
-
-    const qry = `DELETE FROM ${this._table}` + (this._where.length ? ` WHERE ${this._where.join(' AND ')}` : '') + ';';
-
-    return generateParameterizedQuery(qry, this._itemValues);
   }
 
   from = (table: string) => {
@@ -36,4 +25,14 @@ export default class QryDeleteBuilder implements IQryBuilder {
     this._itemValues = [...items];
     return this;
   };
+
+  export(conn: IConnection): string {
+    if (!this._table.length) {
+      throw new Error('[QryDeleteBuilder] Missing table.');
+    }
+
+    const qry = `DELETE FROM ${this._table}` + (this._where.length ? ` WHERE ${this._where.join(' AND ')}` : '') + ';';
+
+    return conn.generateParameterizedQuery(qry, this._itemValues);
+  }
 }

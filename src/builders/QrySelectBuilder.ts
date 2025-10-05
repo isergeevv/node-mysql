@@ -1,6 +1,5 @@
-import { Join, SelectOrder } from '../types';
-import IQryBuilder from '../interface/IQryBuilder';
-import { generateParameterizedQuery } from '../util';
+import type { Join, SelectOrder } from '../types';
+import type { IConnection, IQryBuilder } from '../interfaces';
 
 export default class QrySelectBuilder implements IQryBuilder {
   private _items: string[];
@@ -85,7 +84,7 @@ export default class QrySelectBuilder implements IQryBuilder {
     return this;
   };
 
-  export() {
+  export(conn: IConnection): string {
     if (!this._table.length) {
       throw new Error('[QrySelectBuilder] Missing table.');
     }
@@ -122,6 +121,6 @@ export default class QrySelectBuilder implements IQryBuilder {
 
     qry = qry.concat(';');
 
-    return generateParameterizedQuery(qry, this._itemValues);
+    return conn.generateParameterizedQuery(qry, this._itemValues);
   }
 }

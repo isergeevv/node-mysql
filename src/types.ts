@@ -1,4 +1,4 @@
-import { FieldPacket, PoolConnection } from 'mysql2/promise';
+import type { FieldPacket, PoolConnection } from 'mysql2/promise';
 
 export type ResultRow = Record<string, any>;
 export type ResultField = FieldPacket;
