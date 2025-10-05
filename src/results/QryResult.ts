@@ -1,5 +1,5 @@
 import { FieldPacket, QueryResult, ResultSetHeader } from 'mysql2';
-import { ResultField, ResultRow } from './types';
+import { ResultField, ResultRow } from '../types';
 
 export default class QryResult {
   private _result: [QueryResult, FieldPacket[]];

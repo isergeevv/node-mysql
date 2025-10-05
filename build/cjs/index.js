@@ -89,6 +89,8 @@ class QryInsertBuilder {
 }
 
 class QrySelectBuilder {
+    _items;
+    _forUpdate;
     _table;
     _joins;
     _where;
@@ -96,9 +98,10 @@ class QrySelectBuilder {
     _limit;
     _order;
     _extra;
-    _items;
     _itemValues;
     constructor(...items) {
+        this._items = items;
+        this._forUpdate = false;
         this._table = '';
         this._joins = [];
         this._where = [];
@@ -107,31 +110,11 @@ class QrySelectBuilder {
         this._itemValues = [];
         this._startItem = 0;
         this._limit = 0;
-        this._items = items;
     }
-    export() {
-        if (!this._table.length) {
-            throw new Error('[QrySelectBuilder] Missing table.');
-        }
-        let qry = `SELECT ${this._items.length ? this._items.join(', ') : '*'} FROM ${this._table}`;
-        for (const join of this._joins) {
-            qry = qry.concat(`${join.type?.length ? ` ${join.type}` : ''} JOIN ${join.join}`);
-        }
-        if (this._where.length) {
-            qry = qry.concat(` WHERE ${this._where.join(' AND ')}`);
-        }
-        if (this._order.length) {
-            qry = qry.concat(` ORDER BY ${this._order.map((order) => `${order.columns.join(', ')} ${order.direction}`).join(',')}`);
-        }
-        if (this._limit) {
-            qry = qry.concat(` LIMIT ${this._startItem}, ${this._limit}`);
-        }
-        if (this._extra.length) {
-            qry = qry.concat(` ${this._extra}`);
-        }
-        qry = qry.concat(';');
-        return generateParameterizedQuery(qry, this._itemValues);
-    }
+    forUpdate = () => {
+        this._forUpdate = true;
+        return this;
+    };
     from = (table) => {
         this._table = table;
         return this;
@@ -175,6 +158,33 @@ class QrySelectBuilder {
         this._itemValues = [...items];
         return this;
     };
+    export() {
+        if (!this._table.length) {
+            throw new Error('[QrySelectBuilder] Missing table.');
+        }
+        let qry = `SELECT ${this._items.length ? this._items.join(', ') : '*'}`;
+        if (this._forUpdate) {
+            qry = qry.concat(' FOR UPDATE');
+        }
+        qry = qry.concat(` FROM ${this._table}`);
+        for (const join of this._joins) {
+            qry = qry.concat(`${join.type?.length ? ` ${join.type}` : ''} JOIN ${join.join}`);
+        }
+        if (this._where.length) {
+            qry = qry.concat(` WHERE ${this._where.join(' AND ')}`);
+        }
+        if (this._order.length) {
+            qry = qry.concat(` ORDER BY ${this._order.map((order) => `${order.columns.join(', ')} ${order.direction}`).join(',')}`);
+        }
+        if (this._limit) {
+            qry = qry.concat(` LIMIT ${this._startItem}, ${this._limit}`);
+        }
+        if (this._extra.length) {
+            qry = qry.concat(` ${this._extra}`);
+        }
+        qry = qry.concat(';');
+        return generateParameterizedQuery(qry, this._itemValues);
+    }
 }
 
 class QryTableCreateBuilder {
@@ -222,12 +232,25 @@ class QryTableCreateBuilder {
     }
 }
 
-class QryTableBuilder {
-    static exists(table) {
-        return `SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = '${table}';`;
+class QryTableExistsBuilder {
+    _table;
+    constructor(table) {
+        this._table = table;
     }
+    export() {
+        if (!this._table.length) {
+            throw new Error('[QryTableExistsBuilder] Missing table.');
+        }
+        return `SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ${promise.escape(this._table)};`;
+    }
+}
+
+class QryTableBuilder {
     static create(table) {
         return new QryTableCreateBuilder(table);
+    }
+    static exists(table) {
+        return new QryTableExistsBuilder(table);
     }
 }
 
@@ -268,21 +291,6 @@ class QryUpdateBuilder {
     };
 }
 
-class QryBuilder {
-    static select(...items) {
-        return new QrySelectBuilder(...items);
-    }
-    static insert(items) {
-        return new QryInsertBuilder(items);
-    }
-    static delete() {
-        return new QryDeleteBuilder();
-    }
-    static update(table) {
-        return new QryUpdateBuilder(table);
-    }
-}
-
 class QryResult {
     _result;
     constructor(result) {
@@ -308,55 +316,50 @@ class QryResult {
     }
 }
 
-class MySQL {
-    _pool;
-    _lastInsertId;
-    constructor(config) {
-        this._pool = promise.createPool(config);
-        this._lastInsertId = 0;
+class QryBuilder {
+    static select(...items) {
+        return new QrySelectBuilder(...items);
+    }
+    static insert(items) {
+        return new QryInsertBuilder(items);
+    }
+    static delete() {
+        return new QryDeleteBuilder();
+    }
+    static update(table) {
+        return new QryUpdateBuilder(table);
+    }
+}
+
+class DatabaseConnection {
+    _connection;
+    constructor(connection) {
+        this._connection = connection;
+    }
+    get connection() {
+        return this._connection;
     }
     [Symbol.dispose]() {
-        this.close();
-    }
-    get pool() {
-        return this._pool;
-    }
-    get lastInsertId() {
-        return this._lastInsertId;
-    }
-    async getConnection() {
-        return await this._pool.getConnection();
+        this.release();
     }
     async beginTransaction() {
-        const connection = await this.getConnection();
-        await connection.beginTransaction();
-        return connection;
+        await this._connection.beginTransaction();
     }
-    async commitTransaction(connection) {
-        if (!connection)
-            return;
-        connection.commit();
-        connection.release();
+    async commitTransaction() {
+        await this._connection.commit();
     }
-    async rollbackTransaction(connection) {
-        if (!connection)
-            return;
-        connection.rollback();
-        connection.release();
+    async rollbackTransaction() {
+        await this._connection.rollback();
     }
-    async qry(qry, items = [], conn) {
+    async query(qry, items = []) {
         try {
-            const connection = conn || (await this.getConnection());
-            const result = await connection.query(qry, items);
-            if (!conn)
-                connection.release();
-            return new QryResult(result);
+            return this._connection.query(qry, items);
         }
         catch (e) {
             throw new Error(`Error: ${e.message}.\nQuery: ${qry}\nItems: ${items.join(', ')}`);
         }
     }
-    async select(qry, conn) {
+    async select(qry) {
         const sql = typeof qry === 'string'
             ? qry
             : QryBuilder.select(...(qry.select ? (Array.isArray(qry.select) ? qry.select : [qry.select]) : ['*']))
@@ -366,17 +369,15 @@ class MySQL {
                 .extra(qry.extra || '')
                 .setItemValues(...(qry.items || []))
                 .export();
-        return await this.qry(sql, conn);
+        return await this.query(sql);
     }
-    async insert(qry, conn) {
+    async insert(qry) {
         const sql = typeof qry === 'string' ? qry : QryBuilder.insert(qry.items).into(qry.into).export();
-        const result = await this.qry(sql, conn);
+        const result = await this.query(sql);
         const insertId = result.insertId;
-        if (insertId)
-            this._lastInsertId = insertId;
         return insertId;
     }
-    async update(qry, conn) {
+    async update(qry) {
         const sql = typeof qry === 'string'
             ? qry
             : QryBuilder.update(qry.table)
@@ -384,10 +385,10 @@ class MySQL {
                 .where(...(qry.where ? (Array.isArray(qry.where) ? qry.where : [qry.where]) : []))
                 .setItemValues(...(qry.items || []))
                 .export();
-        const result = await this.qry(sql, conn);
+        const result = await this.query(sql);
         return result.affectedRows;
     }
-    async delete(qry, conn) {
+    async delete(qry) {
         const sql = typeof qry === 'string'
             ? qry
             : QryBuilder.delete()
@@ -395,18 +396,69 @@ class MySQL {
                 .where(...(Array.isArray(qry.where) ? qry.where : [qry.where]))
                 .setItemValues(...qry.items)
                 .export();
-        const result = await this.qry(sql, conn);
+        const result = await this.query(sql);
         return result.affectedRows;
     }
-    checkString(value) {
-        return typeof value == 'string' ? `'${value}'` : value;
+    release() {
+        this._connection.release();
+    }
+}
+
+class Database {
+    _pool;
+    constructor(mysqlPool) {
+        this._pool = mysqlPool;
+    }
+    [Symbol.dispose]() {
+        this.close();
+    }
+    get pool() {
+        return this._pool;
+    }
+    async getConnection() {
+        return new DatabaseConnection(await this._pool.getConnection());
+    }
+    async beginTransaction() {
+        const connection = await this.getConnection();
+        await connection.beginTransaction();
+        return connection;
+    }
+    async query(qry, items = []) {
+        const connection = await this.getConnection();
+        const result = await connection.query(qry, items);
+        connection.release();
+        return new QryResult(result);
+    }
+    async select(qry) {
+        const connection = await this.getConnection();
+        const result = await connection.select(qry);
+        connection.release();
+        return result;
+    }
+    async insert(qry) {
+        const connection = await this.getConnection();
+        const result = await connection.insert(qry);
+        connection.release();
+        return result;
+    }
+    async update(qry) {
+        const connection = await this.getConnection();
+        const result = await connection.update(qry);
+        connection.release();
+        return result;
+    }
+    async delete(qry) {
+        const connection = await this.getConnection();
+        const result = await connection.delete(qry);
+        connection.release();
+        return result;
     }
     close() {
         this._pool.end();
     }
 }
 
-exports.MySQL = MySQL;
+exports.Database = Database;
 exports.QryBuilder = QryBuilder;
 exports.QryDeleteBuilder = QryDeleteBuilder;
 exports.QryInsertBuilder = QryInsertBuilder;

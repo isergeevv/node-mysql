@@ -18,3 +18,7 @@ export const generateParameterizedQuery = (queryString: string, values: (string 
 
   return preparedQuery;
 };
+
+export const checkString = (value: string | number) => {
+  return typeof value == 'string' ? `'${value}'` : value;
+};
