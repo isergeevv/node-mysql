@@ -11,7 +11,7 @@ export interface SelectProps {
   join?: Join[];
   where?: string | string[];
   extra?: string;
-  items?: (string | number)[];
+  items?: (string | number | bigint)[];
 }
 
 export interface SelectReturn {
@@ -29,7 +29,7 @@ export interface UpdateProps {
   table: string;
   set: string | string[];
   where?: string | string[];
-  items?: (string | number)[];
+  items?: (string | number | bigint)[];
   conn?: PoolConnection;
 }
 

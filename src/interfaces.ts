@@ -12,7 +12,7 @@ export interface IConnection {
   update(qry: string | UpdateProps): Promise<IQryUpdateResult>;
   delete(qry: string | DeleteProps): Promise<IQryDeleteResult>;
   escape(value: unknown): string;
-  generateParameterizedQuery(queryString: string, values?: (string | number)[]): string;
+  generateParameterizedQuery(queryString: string, values?: (string | number | bigint)[]): string;
 }
 
 export interface IDatabaseConnection extends IConnection {

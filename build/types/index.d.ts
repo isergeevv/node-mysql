@@ -10,7 +10,7 @@ interface SelectProps {
     join?: Join[];
     where?: string | string[];
     extra?: string;
-    items?: (string | number)[];
+    items?: (string | number | bigint)[];
 }
 interface SelectReturn {
     rows: ResultRow[];
@@ -25,7 +25,7 @@ interface UpdateProps {
     table: string;
     set: string | string[];
     where?: string | string[];
-    items?: (string | number)[];
+    items?: (string | number | bigint)[];
     conn?: PoolConnection;
 }
 interface DeleteProps {
@@ -83,7 +83,7 @@ declare class QrySelectBuilder implements IQryBuilder {
     order: (...orders: SelectOrder[]) => this;
     startItem: (startItem: number) => this;
     extra: (extra: string) => this;
-    setItemValues: (...items: (string | number)[]) => this;
+    setItemValues: (...items: (string | number | bigint)[]) => this;
     export(conn: IConnection): string;
 }
 
@@ -115,7 +115,7 @@ declare class QryUpdateBuilder implements IQryBuilder {
     constructor(table: string);
     set: (...items: string[]) => this;
     where: (...where: string[]) => this;
-    setItemValues: (...items: (string | number)[]) => this;
+    setItemValues: (...items: (string | number | bigint)[]) => this;
     export(conn: IConnection): string;
 }
 
@@ -154,7 +154,7 @@ interface IConnection {
     update(qry: string | UpdateProps): Promise<IQryUpdateResult>;
     delete(qry: string | DeleteProps): Promise<IQryDeleteResult>;
     escape(value: unknown): string;
-    generateParameterizedQuery(queryString: string, values?: (string | number)[]): string;
+    generateParameterizedQuery(queryString: string, values?: (string | number | bigint)[]): string;
 }
 interface IDatabaseConnection extends IConnection {
     get connection(): PoolConnection;
@@ -224,7 +224,7 @@ declare class DatabaseConnection implements IDatabaseConnection {
     update(qry: string | UpdateProps): Promise<IQryUpdateResult>;
     delete(qry: string | DeleteProps): Promise<IQryDeleteResult>;
     escape(value: unknown): string;
-    generateParameterizedQuery(queryString: string, values?: (string | number)[]): string;
+    generateParameterizedQuery(queryString: string, values?: (string | number | bigint)[]): string;
     release(): void;
 }
 

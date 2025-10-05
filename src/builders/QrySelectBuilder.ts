@@ -12,7 +12,7 @@ export default class QrySelectBuilder implements IQryBuilder {
   private _limit: number;
   private _order: SelectOrder[];
   private _extra: string;
-  private _itemValues: (string | number)[];
+  private _itemValues: (string | number | bigint)[];
 
   constructor(...items: string[]) {
     this._items = items;
@@ -79,7 +79,7 @@ export default class QrySelectBuilder implements IQryBuilder {
     return this;
   };
 
-  setItemValues = (...items: (string | number)[]) => {
+  setItemValues = (...items: (string | number | bigint)[]) => {
     this._itemValues = [...items];
     return this;
   };

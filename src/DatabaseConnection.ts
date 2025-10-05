@@ -117,7 +117,7 @@ export default class DatabaseConnection implements IDatabaseConnection {
     return this._connection.escape(value);
   }
 
-  generateParameterizedQuery(queryString: string, values: (string | number)[] = []): string {
+  generateParameterizedQuery(queryString: string, values: (string | number | bigint)[] = []): string {
     const placeholders = queryString.match(/\?/g);
 
     if (!placeholders) return queryString;
