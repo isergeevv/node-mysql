@@ -13,6 +13,7 @@ import { QryResult, QrySelectResult } from './results';
 import QryUpdateResult from './results/QryUpdateResult';
 import QryInsertResult from './results/QryInsertResult';
 import QryDeleteResult from './results/QryDeleteResult';
+import QryTableBuilder from './QryTableBuilder';
 
 export default class DatabaseConnection implements IDatabaseConnection {
   private _connection: PoolConnection;
@@ -27,6 +28,14 @@ export default class DatabaseConnection implements IDatabaseConnection {
 
   [Symbol.dispose]() {
     this.release();
+  }
+
+  get qryBuilder(): typeof QryBuilder {
+    return QryBuilder;
+  }
+
+  get qryTableBuilder(): typeof QryTableBuilder {
+    return QryTableBuilder;
   }
 
   async beginTransaction(): Promise<void> {

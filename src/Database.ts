@@ -2,6 +2,8 @@ import type { Pool } from 'mysql2/promise';
 import type { DeleteProps, InsertProps, QryItems, SelectProps, UpdateProps } from './types';
 import type { IDatabase, IQryResult, IQrySelectResult } from './interfaces';
 import DatabaseConnection from './DatabaseConnection';
+import QryBuilder from './QryBuilder';
+import QryTableBuilder from './QryTableBuilder';
 
 export default class Database implements IDatabase {
   private _pool: Pool;
@@ -14,8 +16,16 @@ export default class Database implements IDatabase {
     this.close();
   }
 
-  get pool() {
+  get pool(): Pool {
     return this._pool;
+  }
+
+  get qryBuilder(): typeof QryBuilder {
+    return QryBuilder;
+  }
+
+  get qryTableBuilder(): typeof QryTableBuilder {
+    return QryTableBuilder;
   }
 
   async getConnection(): Promise<DatabaseConnection> {

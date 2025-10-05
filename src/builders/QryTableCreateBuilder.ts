@@ -1,4 +1,4 @@
-import { IQryBuilder } from '../interfaces';
+import { IConnection, IQryBuilder } from '../interfaces';
 import { TableColumnData } from '../types';
 
 export default class QryTableCreateBuilder implements IQryBuilder {
@@ -15,7 +15,7 @@ export default class QryTableCreateBuilder implements IQryBuilder {
     return this;
   }
 
-  export() {
+  export(_conn: IConnection): string {
     if (!this._table.length) {
       throw new Error('[QryTableCreateBuilder] Missing table.');
     }

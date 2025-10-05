@@ -180,7 +180,7 @@ class QryTableCreateBuilder {
         this._columns = columnsData;
         return this;
     }
-    export() {
+    export(_conn) {
         if (!this._table.length) {
             throw new Error('[QryTableCreateBuilder] Missing table.');
         }
@@ -379,6 +379,12 @@ class DatabaseConnection {
     [Symbol.dispose]() {
         this.release();
     }
+    get qryBuilder() {
+        return QryBuilder;
+    }
+    get qryTableBuilder() {
+        return QryTableBuilder;
+    }
     async beginTransaction() {
         await this._connection.beginTransaction();
     }
@@ -468,6 +474,12 @@ class Database {
     }
     get pool() {
         return this._pool;
+    }
+    get qryBuilder() {
+        return QryBuilder;
+    }
+    get qryTableBuilder() {
+        return QryTableBuilder;
     }
     async getConnection() {
         return new DatabaseConnection(await this._pool.getConnection());
