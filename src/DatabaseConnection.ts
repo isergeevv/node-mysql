@@ -53,7 +53,7 @@ export default class DatabaseConnection implements IDatabaseConnection {
     }
   }
 
-  select(qryProps: SelectProps): ISelectQuery {
+  select(qryProps?: SelectProps): ISelectQuery {
     const selectQuery = new SelectQuery(this);
 
     if (qryProps) {
@@ -63,7 +63,7 @@ export default class DatabaseConnection implements IDatabaseConnection {
     return selectQuery;
   }
 
-  insert(qryProps: InsertProps): IInsertQuery {
+  insert(qryProps?: InsertProps): IInsertQuery {
     const insertQuery = new InsertQuery(this);
 
     if (qryProps) {
@@ -73,7 +73,7 @@ export default class DatabaseConnection implements IDatabaseConnection {
     return insertQuery;
   }
 
-  update(qryProps: UpdateProps): IUpdateQuery {
+  update(qryProps?: UpdateProps): IUpdateQuery {
     const updateQuery = new UpdateQuery(this);
 
     if (qryProps) {
@@ -83,7 +83,7 @@ export default class DatabaseConnection implements IDatabaseConnection {
     return updateQuery;
   }
 
-  delete(qryProps: DeleteProps): IDeleteQuery {
+  delete(qryProps?: DeleteProps): IDeleteQuery {
     const deleteQuery = new DeleteQuery(this);
 
     if (qryProps) {

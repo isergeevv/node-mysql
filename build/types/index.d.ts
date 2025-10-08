@@ -74,10 +74,10 @@ interface TableExistsProps {
 
 interface IConnection {
     query(qry: string, items?: any[]): Promise<IResult>;
-    select(qry: SelectProps): ISelectQuery;
-    insert(qry: InsertProps): IInsertQuery;
-    update(qry: UpdateProps): IUpdateQuery;
-    delete(qry: DeleteProps): IDeleteQuery;
+    select(qryProps?: SelectProps): ISelectQuery;
+    insert(qryProps?: InsertProps): IInsertQuery;
+    update(qryProps?: UpdateProps): IUpdateQuery;
+    delete(qryProps?: DeleteProps): IDeleteQuery;
     createTable(qryProps?: CreateTableProps): ICreateTableQuery;
     tableExists(qryProps?: TableExistsProps): ITableExistsQuery;
     escape(value: unknown): string;
@@ -317,10 +317,10 @@ declare class DatabaseConnection implements IDatabaseConnection {
     commitTransaction(): Promise<void>;
     rollbackTransaction(): Promise<void>;
     query(qry: string, items?: any[]): Promise<IResult>;
-    select(qryProps: SelectProps): ISelectQuery;
-    insert(qryProps: InsertProps): IInsertQuery;
-    update(qryProps: UpdateProps): IUpdateQuery;
-    delete(qryProps: DeleteProps): IDeleteQuery;
+    select(qryProps?: SelectProps): ISelectQuery;
+    insert(qryProps?: InsertProps): IInsertQuery;
+    update(qryProps?: UpdateProps): IUpdateQuery;
+    delete(qryProps?: DeleteProps): IDeleteQuery;
     createTable(qryProps?: CreateTableProps): ICreateTableQuery;
     tableExists(qryProps?: TableExistsProps): ITableExistsQuery;
     escape(value: unknown): string;
