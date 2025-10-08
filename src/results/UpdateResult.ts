@@ -1,7 +1,7 @@
-import type { FieldPacket, QueryResult, ResultSetHeader } from 'mysql2';
-import type { IQryDeleteResult } from '../interfaces';
+import type { FieldPacket, QueryResult, ResultSetHeader } from 'mysql2/promise';
+import type { IUpdateResult } from '../interfaces';
 
-export default class QryDeleteResult implements IQryDeleteResult {
+export default class UpdateResult implements IUpdateResult {
   private _result: [QueryResult, FieldPacket[]];
 
   constructor(result: [QueryResult, FieldPacket[]]) {

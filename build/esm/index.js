@@ -12,266 +12,7 @@ var ORDER_DIRECTION;
     ORDER_DIRECTION["DESC"] = "DESC";
 })(ORDER_DIRECTION || (ORDER_DIRECTION = {}));
 
-class QryDeleteBuilder {
-    _table;
-    _where;
-    _itemValues;
-    constructor() {
-        this._table = '';
-        this._where = [];
-        this._itemValues = [];
-    }
-    from = (table) => {
-        this._table = table;
-        return this;
-    };
-    where = (...where) => {
-        this._where = [...where];
-        return this;
-    };
-    setItemValues = (...items) => {
-        this._itemValues = [...items];
-        return this;
-    };
-    export(conn) {
-        if (!this._table.length) {
-            throw new Error('[QryDeleteBuilder] Missing table.');
-        }
-        const qry = `DELETE FROM ${this._table}` + (this._where.length ? ` WHERE ${this._where.join(' AND ')}` : '') + ';';
-        return conn.generateParameterizedQuery(qry, this._itemValues);
-    }
-}
-
-class QryInsertBuilder {
-    _table;
-    _set;
-    constructor(items) {
-        this._table = '';
-        this._set = items || {};
-    }
-    into = (table) => {
-        this._table = table;
-        return this;
-    };
-    set = (items) => {
-        this._set = items;
-        return this;
-    };
-    export(conn) {
-        if (!this._table.length) {
-            throw new Error('[QryInsertBuilder] Missing table.');
-        }
-        const keys = Object.keys(this._set);
-        return (`INSERT INTO ${this._table}` +
-            (keys.length ? ` SET ${keys.map((key) => `${key} = ${conn.escape(this._set[key])}`).join(', ')}` : '') +
-            ';');
-    }
-}
-
-class QrySelectBuilder {
-    _items;
-    _forUpdate;
-    _table;
-    _joins;
-    _where;
-    _startItem;
-    _limit;
-    _order;
-    _extra;
-    _itemValues;
-    constructor(...items) {
-        this._items = items;
-        this._forUpdate = false;
-        this._table = '';
-        this._joins = [];
-        this._where = [];
-        this._order = [];
-        this._extra = '';
-        this._itemValues = [];
-        this._startItem = 0;
-        this._limit = 0;
-    }
-    forUpdate = () => {
-        this._forUpdate = true;
-        return this;
-    };
-    from = (table) => {
-        this._table = table;
-        return this;
-    };
-    join = (...joins) => {
-        this._joins.push(...joins);
-        return this;
-    };
-    where = (...where) => {
-        this._where = [...where];
-        return this;
-    };
-    limit = (limit) => {
-        this._limit = limit;
-        return this;
-    };
-    order = (...orders) => {
-        for (const order of orders) {
-            if (!order.columns.length) {
-                throw new Error('[QrySelectBuilder] Need to set columns to be ordered by.');
-            }
-            this._order.push({
-                direction: order.direction,
-                columns: [...order.columns],
-            });
-        }
-        return this;
-    };
-    startItem = (startItem) => {
-        if (startItem !== 0 && !this._limit) {
-            throw new Error('[QrySelectBuilder] Need to set limit before setting startItem.');
-        }
-        this._startItem = startItem;
-        return this;
-    };
-    extra = (extra) => {
-        this._extra = extra;
-        return this;
-    };
-    setItemValues = (...items) => {
-        this._itemValues = [...items];
-        return this;
-    };
-    export(conn) {
-        if (!this._table.length) {
-            throw new Error('[QrySelectBuilder] Missing table.');
-        }
-        let qry = `SELECT ${this._items.length ? this._items.join(', ') : '*'}`;
-        if (this._forUpdate) {
-            qry = qry.concat(' FOR UPDATE');
-        }
-        qry = qry.concat(` FROM ${this._table}`);
-        for (const join of this._joins) {
-            qry = qry.concat(`${join.type?.length ? ` ${join.type}` : ''} JOIN ${join.join}`);
-        }
-        if (this._where.length) {
-            qry = qry.concat(` WHERE ${this._where.join(' AND ')}`);
-        }
-        if (this._order.length) {
-            qry = qry.concat(` ORDER BY ${this._order.map((order) => `${order.columns.join(', ')} ${order.direction}`).join(',')}`);
-        }
-        if (this._limit) {
-            qry = qry.concat(` LIMIT ${this._startItem}, ${this._limit}`);
-        }
-        if (this._extra.length) {
-            qry = qry.concat(` ${this._extra}`);
-        }
-        qry = qry.concat(';');
-        return conn.generateParameterizedQuery(qry, this._itemValues);
-    }
-}
-
-class QryTableCreateBuilder {
-    _table;
-    _columns;
-    constructor(table) {
-        this._table = table;
-        this._columns = [];
-    }
-    columns(columnsData) {
-        this._columns = columnsData;
-        return this;
-    }
-    export(_conn) {
-        if (!this._table.length) {
-            throw new Error('[QryTableCreateBuilder] Missing table.');
-        }
-        return `CREATE TABLE ${this._table} (
-      ${this._columns.map((columnData) => {
-            let c = '';
-            if (!columnData.name) {
-                throw new Error(`[QryTableCreateBuilder] Column missing name.`);
-            }
-            c = c.concat(columnData.name);
-            if (!columnData.type) {
-                throw new Error(`[QryTableCreateBuilder] Column missing type.`);
-            }
-            c = c.concat(` ${columnData.type}`);
-            if (columnData.isAutoIncrement) {
-                c = c.concat(` AUTO_INCREMENT`);
-            }
-            if (columnData.isPrimary) {
-                c = c.concat(` PRIMARY KEY`);
-            }
-            if (columnData.isUnique) {
-                c = c.concat(` UNIQUE`);
-            }
-            c = c.concat(columnData.isNull ? ` NULL` : ` NOT NULL`);
-            if (columnData.default) {
-                c = c.concat(` DEFAULT ${columnData.default}`);
-            }
-            return c;
-        })}
-    );`;
-    }
-}
-
-class QryTableExistsBuilder {
-    _table;
-    constructor(table) {
-        this._table = table;
-    }
-    export(conn) {
-        if (!this._table.length) {
-            throw new Error('[QryTableExistsBuilder] Missing table.');
-        }
-        return `SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ${conn.escape(this._table)};`;
-    }
-}
-
-class QryTableBuilder {
-    static create(table) {
-        return new QryTableCreateBuilder(table);
-    }
-    static exists(table) {
-        return new QryTableExistsBuilder(table);
-    }
-}
-
-class QryUpdateBuilder {
-    _table;
-    _where;
-    _items;
-    _itemValues;
-    constructor(table) {
-        this._table = table;
-        this._where = [];
-        this._itemValues = [];
-        this._items = [];
-    }
-    set = (...items) => {
-        this._items = items;
-        return this;
-    };
-    where = (...where) => {
-        this._where = [...where];
-        return this;
-    };
-    setItemValues = (...items) => {
-        this._itemValues = [...items];
-        return this;
-    };
-    export(conn) {
-        if (!this._table.length) {
-            throw new Error('[QryUpdateBuilder] Missing table.');
-        }
-        if (!this._items.length) {
-            throw new Error('[QryUpdateBuilder] Missing set items.');
-        }
-        const qry = `UPDATE ${this._table} SET ${this._items.join(', ')}` +
-            (this._where.length ? ` WHERE ${this._where.join(' AND ')}` : '') +
-            ';';
-        return conn.generateParameterizedQuery(qry, this._itemValues);
-    }
-}
-
-class QryResult {
+class Result {
     _result;
     constructor(result) {
         this._result = result;
@@ -296,7 +37,7 @@ class QryResult {
     }
 }
 
-class QrySelectResult {
+class SelectResult {
     _result;
     constructor(result) {
         this._result = result;
@@ -312,35 +53,7 @@ class QrySelectResult {
     }
 }
 
-class QryBuilder {
-    static select(...items) {
-        return new QrySelectBuilder(...items);
-    }
-    static insert(items) {
-        return new QryInsertBuilder(items);
-    }
-    static delete() {
-        return new QryDeleteBuilder();
-    }
-    static update(table) {
-        return new QryUpdateBuilder(table);
-    }
-}
-
-class QryUpdateResult {
-    _result;
-    constructor(result) {
-        this._result = result;
-    }
-    get affectedRows() {
-        return this._result[0].affectedRows ?? 0;
-    }
-    get raw() {
-        return this._result;
-    }
-}
-
-class QryInsertResult {
+class InsertResult {
     _result;
     constructor(result) {
         this._result = result;
@@ -353,7 +66,7 @@ class QryInsertResult {
     }
 }
 
-class QryDeleteResult {
+class UpdateResult {
     _result;
     constructor(result) {
         this._result = result;
@@ -366,6 +79,395 @@ class QryDeleteResult {
     }
 }
 
+class DeleteResult {
+    _result;
+    constructor(result) {
+        this._result = result;
+    }
+    get affectedRows() {
+        return this._result[0].affectedRows ?? 0;
+    }
+    get raw() {
+        return this._result;
+    }
+}
+
+class DeleteQuery {
+    _connection;
+    _props;
+    constructor(connection) {
+        this._connection = connection;
+        this._props = {
+            table: '',
+            where: '',
+            params: [],
+        };
+    }
+    from(table) {
+        this._props.table = table;
+        return this;
+    }
+    where(where) {
+        this._props.where = where;
+        return this;
+    }
+    setParams(...params) {
+        this._props.params = params;
+        return this;
+    }
+    import(qryProps) {
+        this._props = { ...this._props, ...qryProps };
+        return this;
+    }
+    export() {
+        if (!this._props.table.length) {
+            throw new Error('[DeleteQuery] Missing table.');
+        }
+        const qry = `DELETE FROM ${this._props.table}` + (this._props.where.length ? ` WHERE ${this._props.where}` : '') + ';';
+        return this._connection.generateParameterizedQuery(qry, this._props.params);
+    }
+    async execute() {
+        const qryResult = await this._connection.query(this.export());
+        return new DeleteResult(qryResult.raw);
+    }
+    async then(onfulfilled, onrejected) {
+        return this.execute().then(onfulfilled, onrejected);
+    }
+}
+
+class InsertQuery {
+    _connection;
+    _props;
+    constructor(connection) {
+        this._connection = connection;
+        this._props = {
+            table: '',
+            items: {},
+        };
+    }
+    into(table) {
+        this._props.table = table;
+        return this;
+    }
+    items(items) {
+        this._props.items = items;
+        return this;
+    }
+    import(qryProps) {
+        this._props = { ...this._props, ...qryProps };
+        return this;
+    }
+    export() {
+        if (!this._props.table.length) {
+            throw new Error('[InsertQuery] Missing table.');
+        }
+        const keys = Object.keys(this._props.items);
+        return (`INSERT INTO ${this._props.table}` +
+            (keys.length
+                ? ` SET ${keys.map((key) => `${key} = ${this._connection.escape(this._props.items[key])}`).join(', ')}`
+                : '') +
+            ';');
+    }
+    async execute() {
+        const qryResult = await this._connection.query(this.export());
+        return new InsertResult(qryResult.raw);
+    }
+    async then(onfulfilled, onrejected) {
+        return this.execute().then(onfulfilled, onrejected);
+    }
+}
+
+class SelectQuery {
+    _connection;
+    _props;
+    constructor(connection) {
+        this._connection = connection;
+        this._props = {
+            items: [],
+            forUpdate: false,
+            table: '',
+            joins: [],
+            where: '',
+            limit: 0,
+            order: [],
+            startItem: 0,
+            extra: '',
+            params: [],
+        };
+    }
+    items(...items) {
+        this._props.items = items;
+        return this;
+    }
+    forUpdate() {
+        this._props.forUpdate = true;
+        return this;
+    }
+    from(table) {
+        this._props.table = table;
+        return this;
+    }
+    join(...joins) {
+        this._props.joins.push(...joins);
+        return this;
+    }
+    where(where) {
+        this._props.where = where;
+        return this;
+    }
+    limit(limit) {
+        this._props.limit = limit;
+        return this;
+    }
+    order(...orders) {
+        for (const order of orders) {
+            if (!order.columns.length) {
+                throw new Error('[SelectQuery] Need to set columns to be ordered by.');
+            }
+            this._props.order.push(order);
+        }
+        return this;
+    }
+    startItem(startItem) {
+        if (startItem !== 0 && this._props.limit === 0) {
+            throw new Error('[SelectQuery] Need to set limit before setting startItem.');
+        }
+        this._props.startItem = startItem;
+        return this;
+    }
+    extra(extra) {
+        this._props.extra = extra;
+        return this;
+    }
+    setParams(...items) {
+        this._props.params = items;
+        return this;
+    }
+    import(qryProps) {
+        this._props = { ...this._props, ...qryProps };
+        return this;
+    }
+    export() {
+        if (this._props.table.length === 0) {
+            throw new Error('[SelectQuery] Missing table.');
+        }
+        let qry = `SELECT ${this._props.items.length > 0 ? this._props.items.join(', ') : '*'}`;
+        if (this._props.forUpdate) {
+            qry = qry.concat(' FOR UPDATE');
+        }
+        qry = qry.concat(` FROM ${this._props.table}`);
+        for (const join of this._props.joins) {
+            qry = qry.concat(`${join.type?.length ? ` ${join.type}` : ''} JOIN ${join.join}`);
+        }
+        if (this._props.where.length) {
+            qry = qry.concat(` WHERE ${this._props.where}`);
+        }
+        if (this._props.order.length) {
+            qry = qry.concat(` ORDER BY ${this._props.order.map((order) => `${order.columns.join(', ')} ${order.direction}`).join(',')}`);
+        }
+        if (this._props.limit) {
+            qry = qry.concat(` LIMIT ${this._props.startItem}, ${this._props.limit}`);
+        }
+        if (this._props.extra.length > 0) {
+            qry = qry.concat(` ${this._props.extra}`);
+        }
+        qry = qry.concat(';');
+        return this._connection.generateParameterizedQuery(qry, this._props.params);
+    }
+    async execute() {
+        const qryResult = await this._connection.query(this.export());
+        return new SelectResult(qryResult.raw);
+    }
+    async then(onfulfilled, onrejected) {
+        return this.execute().then(onfulfilled, onrejected);
+    }
+}
+
+class UpdateQuery {
+    _connection;
+    _props;
+    constructor(connection) {
+        this._connection = connection;
+        this._props = {
+            table: '',
+            items: [],
+            where: '',
+            params: [],
+        };
+    }
+    table(table) {
+        this._props.table = table;
+        return this;
+    }
+    set(...items) {
+        this._props.items.push(...items);
+        return this;
+    }
+    where(where) {
+        this._props.where = where;
+        return this;
+    }
+    setParams(...params) {
+        this._props.params = params;
+        return this;
+    }
+    import(qryProps) {
+        this._props = { ...this._props, ...qryProps };
+        return this;
+    }
+    export() {
+        if (!this._props.table.length) {
+            throw new Error('[UpdateQuery] Missing table.');
+        }
+        if (!this._props.items.length) {
+            throw new Error('[UpdateQuery] Missing set items.');
+        }
+        const qry = `UPDATE ${this._props.table} SET ${this._props.items.join(', ')}` +
+            (this._props.where.length ? ` WHERE ${this._props.where}` : '') +
+            ';';
+        return this._connection.generateParameterizedQuery(qry, this._props.params);
+    }
+    async execute() {
+        const qryResult = await this._connection.query(this.export());
+        return new UpdateResult(qryResult.raw);
+    }
+    async then(onfulfilled, onrejected) {
+        return this.execute().then(onfulfilled, onrejected);
+    }
+}
+
+class TableExistsResult {
+    _result;
+    constructor(result) {
+        this._result = result;
+    }
+    get exists() {
+        const rows = this._result[0];
+        return rows.length > 0 && rows[0]['COUNT(*)'] === 1;
+    }
+    get raw() {
+        return this._result;
+    }
+}
+
+class TableExistsQuery {
+    _connection;
+    _props;
+    constructor(connection) {
+        this._connection = connection;
+        this._props = {
+            table: '',
+        };
+    }
+    table(table) {
+        this._props.table = table;
+        return this;
+    }
+    import(props) {
+        this._props = { ...this._props, ...props };
+        return this;
+    }
+    export() {
+        if (!this._props.table.length) {
+            throw new Error('[TableExistsQuery] Missing table.');
+        }
+        return `SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ${this._connection.escape(this._props.table)};`;
+    }
+    async execute() {
+        const qryResult = await this._connection.query(this.export());
+        return new TableExistsResult(qryResult.raw);
+    }
+    async then(onfulfilled, onrejected) {
+        return this.execute().then(onfulfilled, onrejected);
+    }
+}
+
+class CreateTableResult {
+    _result;
+    constructor(result) {
+        this._result = result;
+    }
+    get raw() {
+        return this._result;
+    }
+}
+
+class CreateTableQuery {
+    _connection;
+    _props;
+    constructor(connection) {
+        this._connection = connection;
+        this._props = {
+            table: '',
+            columns: [],
+            ifNotExists: false,
+        };
+    }
+    table(table) {
+        this._props.table = table;
+        return this;
+    }
+    columns(...columns) {
+        this._props.columns.push(...columns);
+        return this;
+    }
+    ifNotExists(ifNotExists = true) {
+        this._props.ifNotExists = ifNotExists;
+        return this;
+    }
+    import(props) {
+        this._props = { ...this._props, ...props };
+        return this;
+    }
+    export() {
+        if (!this._props.table.length) {
+            throw new Error('[CreateTableQuery] Missing table.');
+        }
+        let qry = `CREATE TABLE ${this._props.table}`;
+        if (this._props.ifNotExists) {
+            qry = qry.concat(' IF NOT EXISTS');
+        }
+        qry = qry.concat(` (
+      ${this._props.columns.map((columnData) => {
+            let c = '';
+            if (!columnData.name) {
+                throw new Error(`[CreateTableQuery] Column missing name.`);
+            }
+            c = c.concat(columnData.name);
+            if (!columnData.type) {
+                throw new Error(`[CreateTableQuery] Column missing type.`);
+            }
+            c = c.concat(` ${columnData.type}`);
+            if (columnData.isAutoIncrement) {
+                c = c.concat(` AUTO_INCREMENT`);
+            }
+            if (columnData.isPrimary) {
+                c = c.concat(` PRIMARY KEY`);
+            }
+            if (columnData.isUnique) {
+                c = c.concat(` UNIQUE`);
+            }
+            c = c.concat(columnData.isNull ? ` NULL` : ` NOT NULL`);
+            if (columnData.default) {
+                c = c.concat(` DEFAULT ${columnData.default}`);
+            }
+            return c;
+        })}
+    );`);
+        return qry;
+    }
+    async execute() {
+        const qryResult = await this._connection.query(this.export());
+        return new CreateTableResult(qryResult.raw);
+    }
+    async then(onfulfilled, onrejected) {
+        return this.execute().then(onfulfilled, onrejected);
+    }
+}
+
+const AND = (a, b) => `(${a} AND ${b})`;
+const OR = (a, b) => `(${a} OR ${b})`;
+
 class DatabaseConnection {
     _connection;
     constructor(connection) {
@@ -376,12 +478,6 @@ class DatabaseConnection {
     }
     [Symbol.dispose]() {
         this.release();
-    }
-    get qryBuilder() {
-        return QryBuilder;
-    }
-    get qryTableBuilder() {
-        return QryTableBuilder;
     }
     async beginTransaction() {
         await this._connection.beginTransaction();
@@ -394,51 +490,53 @@ class DatabaseConnection {
     }
     async query(qry, items = []) {
         try {
-            return new QryResult(await this._connection.query(qry, items));
+            return new Result(await this._connection.query(qry, items));
         }
         catch (e) {
             throw new Error(`Error: ${e.message}.\nQuery: ${qry}\nItems: ${items.join(', ')}`);
         }
     }
-    async select(qry) {
-        const sql = typeof qry === 'string'
-            ? qry
-            : QryBuilder.select(...(qry.select ? (Array.isArray(qry.select) ? qry.select : [qry.select]) : ['*']))
-                .from(qry.from)
-                .join(...(qry.join ? (Array.isArray(qry.join) ? qry.join : [qry.join]) : []))
-                .where(...(qry.where ? (Array.isArray(qry.where) ? qry.where : [qry.where]) : []))
-                .extra(qry.extra || '')
-                .setItemValues(...(qry.items || []))
-                .export(this);
-        const qryResult = await this.query(sql);
-        return new QrySelectResult(qryResult.raw);
+    select(qryProps) {
+        const selectQuery = new SelectQuery(this);
+        if (qryProps) {
+            selectQuery.import(qryProps);
+        }
+        return selectQuery;
     }
-    async insert(qry) {
-        const sql = typeof qry === 'string' ? qry : QryBuilder.insert(qry.items).into(qry.into).export(this);
-        const result = await this.query(sql);
-        return new QryInsertResult(result.raw);
+    insert(qryProps) {
+        const insertQuery = new InsertQuery(this);
+        if (qryProps) {
+            insertQuery.import(qryProps);
+        }
+        return insertQuery;
     }
-    async update(qry) {
-        const sql = typeof qry === 'string'
-            ? qry
-            : QryBuilder.update(qry.table)
-                .set(...(Array.isArray(qry.set) ? qry.set : [qry.set]))
-                .where(...(qry.where ? (Array.isArray(qry.where) ? qry.where : [qry.where]) : []))
-                .setItemValues(...(qry.items || []))
-                .export(this);
-        const result = await this.query(sql);
-        return new QryUpdateResult(result.raw);
+    update(qryProps) {
+        const updateQuery = new UpdateQuery(this);
+        if (qryProps) {
+            updateQuery.import(qryProps);
+        }
+        return updateQuery;
     }
-    async delete(qry) {
-        const sql = typeof qry === 'string'
-            ? qry
-            : QryBuilder.delete()
-                .from(qry.table)
-                .where(...(Array.isArray(qry.where) ? qry.where : [qry.where]))
-                .setItemValues(...qry.items)
-                .export(this);
-        const result = await this.query(sql);
-        return new QryDeleteResult(result.raw);
+    delete(qryProps) {
+        const deleteQuery = new DeleteQuery(this);
+        if (qryProps) {
+            deleteQuery.import(qryProps);
+        }
+        return deleteQuery;
+    }
+    createTable(qryProps) {
+        const createTableQuery = new CreateTableQuery(this);
+        if (qryProps) {
+            createTableQuery.import(qryProps);
+        }
+        return createTableQuery;
+    }
+    tableExists(qryProps) {
+        const tableExistsQuery = new TableExistsQuery(this);
+        if (qryProps) {
+            tableExistsQuery.import(qryProps);
+        }
+        return tableExistsQuery;
     }
     escape(value) {
         return this._connection.escape(value);
@@ -473,12 +571,6 @@ class Database {
     get pool() {
         return this._pool;
     }
-    get qryBuilder() {
-        return QryBuilder;
-    }
-    get qryTableBuilder() {
-        return QryTableBuilder;
-    }
     async getConnection() {
         return new DatabaseConnection(await this._pool.getConnection());
     }
@@ -493,29 +585,47 @@ class Database {
         connection.release();
         return result;
     }
-    async select(qry) {
-        const connection = await this.getConnection();
-        const result = await connection.select(qry);
-        connection.release();
-        return result;
+    select(qryProps) {
+        const selectQuery = new SelectQuery(this);
+        if (qryProps) {
+            selectQuery.import(qryProps);
+        }
+        return selectQuery;
     }
-    async insert(qry) {
-        const connection = await this.getConnection();
-        const result = await connection.insert(qry);
-        connection.release();
-        return result;
+    insert(qryProps) {
+        const insertQuery = new InsertQuery(this);
+        if (qryProps) {
+            insertQuery.import(qryProps);
+        }
+        return insertQuery;
     }
-    async update(qry) {
-        const connection = await this.getConnection();
-        const result = await connection.update(qry);
-        connection.release();
-        return result;
+    update(qryProps) {
+        const updateQuery = new UpdateQuery(this);
+        if (qryProps) {
+            updateQuery.import(qryProps);
+        }
+        return updateQuery;
     }
-    async delete(qry) {
-        const connection = await this.getConnection();
-        const result = await connection.delete(qry);
-        connection.release();
-        return result;
+    delete(qryProps) {
+        const deleteQuery = new DeleteQuery(this);
+        if (qryProps) {
+            deleteQuery.import(qryProps);
+        }
+        return deleteQuery;
+    }
+    createTable(qryProps) {
+        const createTableQuery = new CreateTableQuery(this);
+        if (qryProps) {
+            createTableQuery.import(qryProps);
+        }
+        return createTableQuery;
+    }
+    tableExists(qryProps) {
+        const tableExistsQuery = new TableExistsQuery(this);
+        if (qryProps) {
+            tableExistsQuery.import(qryProps);
+        }
+        return tableExistsQuery;
     }
     escape(value) {
         return this._pool.escape(value);
@@ -539,4 +649,4 @@ class Database {
     }
 }
 
-export { Database, ORDER_DIRECTION, QryBuilder, QryDeleteBuilder, QryInsertBuilder, QryResult, QrySelectBuilder, QrySelectResult, QryTableBuilder, QryTableCreateBuilder, QryUpdateBuilder, TABLE_JOIN_TYPE };
+export { AND, CreateTableQuery, Database, DatabaseConnection, DeleteQuery, DeleteResult, InsertQuery, InsertResult, OR, ORDER_DIRECTION, Result, SelectQuery, SelectResult, TABLE_JOIN_TYPE, TableExistsQuery, UpdateQuery, UpdateResult };

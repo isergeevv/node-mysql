@@ -1,43 +1,13 @@
-import type { FieldPacket, PoolConnection } from 'mysql2/promise';
+import type { FieldPacket } from 'mysql2/promise';
 
 export type ResultRow = Record<string, any>;
 export type ResultField = FieldPacket;
 
 export type QryItems = any | any[] | Record<string, any>;
 
-export interface SelectProps {
-  select?: string | string[];
-  from: string;
-  join?: Join[];
-  where?: string | string[];
-  extra?: string;
-  items?: (string | number | bigint)[];
-}
-
 export interface SelectReturn {
   rows: ResultRow[];
   fields: FieldPacket[];
-}
-
-export interface InsertProps {
-  into: string;
-  items: Record<string, any>;
-  conn?: PoolConnection;
-}
-
-export interface UpdateProps {
-  table: string;
-  set: string | string[];
-  where?: string | string[];
-  items?: (string | number | bigint)[];
-  conn?: PoolConnection;
-}
-
-export interface DeleteProps {
-  table: string;
-  where: string | string[];
-  items: any[];
-  conn?: PoolConnection;
 }
 
 export enum TABLE_JOIN_TYPE {
@@ -71,4 +41,45 @@ export interface TableColumnData {
   isUnique: boolean;
   isNull: boolean;
   default: string;
+}
+
+export interface SelectProps {
+  forUpdate: boolean;
+  table: string;
+  joins: Join[];
+  where: string;
+  limit: number;
+  order: SelectOrder[];
+  startItem: number;
+  extra: string;
+  items: string[];
+  params: (string | number | bigint)[];
+}
+
+export interface InsertProps {
+  table: string;
+  items: Record<string, any>;
+}
+
+export interface UpdateProps {
+  table: string;
+  items: string[];
+  where: string;
+  params: (string | number | bigint)[];
+}
+
+export interface DeleteProps {
+  table: string;
+  where: string;
+  params: (string | number | bigint)[];
+}
+
+export interface CreateTableProps {
+  table: string;
+  columns: Partial<TableColumnData>[];
+  ifNotExists: boolean;
+}
+
+export interface TableExistsProps {
+  table: string;
 }

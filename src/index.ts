@@ -1,8 +1,8 @@
 export * from './types';
 export * from './interfaces';
-export * from './builders';
 export * from './results';
+export * from './query';
+export * from './util';
 
 export { default as Database } from './Database';
-export { default as QryBuilder } from './QryBuilder';
-export { default as QryTableBuilder } from './QryTableBuilder';
+export { default as DatabaseConnection } from './DatabaseConnection';

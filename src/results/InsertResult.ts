@@ -1,7 +1,7 @@
-import type { FieldPacket, QueryResult, ResultSetHeader } from 'mysql2';
-import type { IQryInsertResult } from '../interfaces';
+import type { FieldPacket, QueryResult, ResultSetHeader } from 'mysql2/promise';
+import type { IInsertResult } from '../interfaces';
 
-export default class QryInsertResult implements IQryInsertResult {
+export default class InsertResult implements IInsertResult {
   private _result: [QueryResult, FieldPacket[]];
 
   constructor(result: [QueryResult, FieldPacket[]]) {

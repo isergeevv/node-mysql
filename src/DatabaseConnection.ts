@@ -1,19 +1,22 @@
 import type { PoolConnection } from 'mysql2/promise';
-import type { DeleteProps, InsertProps, SelectProps, UpdateProps } from './types';
+import type { CreateTableProps, DeleteProps, InsertProps, SelectProps, TableExistsProps, UpdateProps } from './types';
 import type {
+  ICreateTableQuery,
   IDatabaseConnection,
-  IQryDeleteResult,
-  IQryInsertResult,
-  IQryResult,
-  IQrySelectResult,
-  IQryUpdateResult,
+  IDeleteQuery,
+  IInsertQuery,
+  IResult,
+  ISelectQuery,
+  ITableExistsQuery,
+  IUpdateQuery,
 } from './interfaces';
-import QryBuilder from './QryBuilder';
-import { QryResult, QrySelectResult } from './results';
-import QryUpdateResult from './results/QryUpdateResult';
-import QryInsertResult from './results/QryInsertResult';
-import QryDeleteResult from './results/QryDeleteResult';
-import QryTableBuilder from './QryTableBuilder';
+import Result from './results/Result';
+import SelectQuery from './query/SelectQuery';
+import InsertQuery from './query/InsertQuery';
+import UpdateQuery from './query/UpdateQuery';
+import DeleteQuery from './query/DeleteQuery';
+import CreateTableQuery from './query/CreateTableQuery';
+import { TableExistsQuery } from './query';
 
 export default class DatabaseConnection implements IDatabaseConnection {
   private _connection: PoolConnection;
@@ -30,14 +33,6 @@ export default class DatabaseConnection implements IDatabaseConnection {
     this.release();
   }
 
-  get qryBuilder(): typeof QryBuilder {
-    return QryBuilder;
-  }
-
-  get qryTableBuilder(): typeof QryTableBuilder {
-    return QryTableBuilder;
-  }
-
   async beginTransaction(): Promise<void> {
     await this._connection.beginTransaction();
   }
@@ -50,67 +45,72 @@ export default class DatabaseConnection implements IDatabaseConnection {
     await this._connection.rollback();
   }
 
-  async query(qry: string, items: any[] = []): Promise<IQryResult> {
+  async query(qry: string, items: any[] = []): Promise<IResult> {
     try {
-      return new QryResult(await this._connection.query(qry, items));
+      return new Result(await this._connection.query(qry, items));
     } catch (e: any) {
       throw new Error(`Error: ${e.message}.\nQuery: ${qry}\nItems: ${items.join(', ')}`);
     }
   }
 
-  async select(qry: string | SelectProps): Promise<IQrySelectResult> {
-    const sql =
-      typeof qry === 'string'
-        ? qry
-        : QryBuilder.select(...(qry.select ? (Array.isArray(qry.select) ? qry.select : [qry.select]) : ['*']))
-            .from(qry.from)
-            .join(...(qry.join ? (Array.isArray(qry.join) ? qry.join : [qry.join]) : []))
-            .where(...(qry.where ? (Array.isArray(qry.where) ? qry.where : [qry.where]) : []))
-            .extra(qry.extra || '')
-            .setItemValues(...(qry.items || []))
-            .export(this);
+  select(qryProps: SelectProps): ISelectQuery {
+    const selectQuery = new SelectQuery(this);
 
-    const qryResult = await this.query(sql);
+    if (qryProps) {
+      selectQuery.import(qryProps);
+    }
 
-    return new QrySelectResult(qryResult.raw);
+    return selectQuery;
   }
 
-  async insert(qry: string | InsertProps): Promise<IQryInsertResult> {
-    const sql = typeof qry === 'string' ? qry : QryBuilder.insert(qry.items).into(qry.into).export(this);
+  insert(qryProps: InsertProps): IInsertQuery {
+    const insertQuery = new InsertQuery(this);
 
-    const result = await this.query(sql);
+    if (qryProps) {
+      insertQuery.import(qryProps);
+    }
 
-    return new QryInsertResult(result.raw);
+    return insertQuery;
   }
 
-  async update(qry: string | UpdateProps): Promise<IQryUpdateResult> {
-    const sql =
-      typeof qry === 'string'
-        ? qry
-        : QryBuilder.update(qry.table)
-            .set(...(Array.isArray(qry.set) ? qry.set : [qry.set]))
-            .where(...(qry.where ? (Array.isArray(qry.where) ? qry.where : [qry.where]) : []))
-            .setItemValues(...(qry.items || []))
-            .export(this);
+  update(qryProps: UpdateProps): IUpdateQuery {
+    const updateQuery = new UpdateQuery(this);
 
-    const result = await this.query(sql);
+    if (qryProps) {
+      updateQuery.import(qryProps);
+    }
 
-    return new QryUpdateResult(result.raw);
+    return updateQuery;
   }
 
-  async delete(qry: string | DeleteProps): Promise<IQryDeleteResult> {
-    const sql =
-      typeof qry === 'string'
-        ? qry
-        : QryBuilder.delete()
-            .from(qry.table)
-            .where(...(Array.isArray(qry.where) ? qry.where : [qry.where]))
-            .setItemValues(...qry.items)
-            .export(this);
+  delete(qryProps: DeleteProps): IDeleteQuery {
+    const deleteQuery = new DeleteQuery(this);
 
-    const result = await this.query(sql);
+    if (qryProps) {
+      deleteQuery.import(qryProps);
+    }
 
-    return new QryDeleteResult(result.raw);
+    return deleteQuery;
+  }
+
+  createTable(qryProps?: CreateTableProps): ICreateTableQuery {
+    const createTableQuery = new CreateTableQuery(this);
+
+    if (qryProps) {
+      createTableQuery.import(qryProps);
+    }
+
+    return createTableQuery;
+  }
+
+  tableExists(qryProps?: TableExistsProps): ITableExistsQuery {
+    const tableExistsQuery = new TableExistsQuery(this);
+
+    if (qryProps) {
+      tableExistsQuery.import(qryProps);
+    }
+
+    return tableExistsQuery;
   }
 
   escape(value: unknown): string {

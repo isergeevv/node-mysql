@@ -1,9 +1,31 @@
 import type { Pool } from 'mysql2/promise';
-import type { DeleteProps, InsertProps, QryItems, SelectProps, UpdateProps } from './types';
-import type { IDatabase, IQryResult, IQrySelectResult } from './interfaces';
+import type {
+  CreateTableProps,
+  DeleteProps,
+  InsertProps,
+  QryItems,
+  SelectProps,
+  TableExistsProps,
+  UpdateProps,
+} from './types';
+import type {
+  ICreateTableQuery,
+  IDatabase,
+  IDatabaseConnection,
+  IDeleteQuery,
+  IInsertQuery,
+  IResult,
+  ISelectQuery,
+  ITableExistsQuery,
+  IUpdateQuery,
+} from './interfaces';
 import DatabaseConnection from './DatabaseConnection';
-import QryBuilder from './QryBuilder';
-import QryTableBuilder from './QryTableBuilder';
+import SelectQuery from './query/SelectQuery';
+import InsertQuery from './query/InsertQuery';
+import UpdateQuery from './query/UpdateQuery';
+import DeleteQuery from './query/DeleteQuery';
+import CreateTableQuery from './query/CreateTableQuery';
+import { TableExistsQuery } from './query';
 
 export default class Database implements IDatabase {
   private _pool: Pool;
@@ -20,63 +42,83 @@ export default class Database implements IDatabase {
     return this._pool;
   }
 
-  get qryBuilder(): typeof QryBuilder {
-    return QryBuilder;
-  }
-
-  get qryTableBuilder(): typeof QryTableBuilder {
-    return QryTableBuilder;
-  }
-
-  async getConnection(): Promise<DatabaseConnection> {
+  async getConnection(): Promise<IDatabaseConnection> {
     return new DatabaseConnection(await this._pool.getConnection());
   }
 
-  async beginTransaction(): Promise<DatabaseConnection> {
-    const connection: DatabaseConnection = await this.getConnection();
+  async beginTransaction(): Promise<IDatabaseConnection> {
+    const connection: IDatabaseConnection = await this.getConnection();
     await connection.beginTransaction();
 
     return connection;
   }
 
-  async query(qry: string, items: QryItems = []): Promise<IQryResult> {
-    const connection: DatabaseConnection = await this.getConnection();
+  async query(qry: string, items: QryItems = []): Promise<IResult> {
+    const connection: IDatabaseConnection = await this.getConnection();
     const result = await connection.query(qry, items);
     connection.release();
 
     return result;
   }
 
-  async select(qry: string | SelectProps): Promise<IQrySelectResult> {
-    const connection: DatabaseConnection = await this.getConnection();
-    const result = await connection.select(qry);
-    connection.release();
+  select(qryProps?: SelectProps): ISelectQuery {
+    const selectQuery = new SelectQuery(this);
 
-    return result;
+    if (qryProps) {
+      selectQuery.import(qryProps);
+    }
+
+    return selectQuery;
   }
 
-  async insert(qry: string | InsertProps) {
-    const connection: DatabaseConnection = await this.getConnection();
-    const result = await connection.insert(qry);
-    connection.release();
+  insert(qryProps?: InsertProps): IInsertQuery {
+    const insertQuery = new InsertQuery(this);
 
-    return result;
+    if (qryProps) {
+      insertQuery.import(qryProps);
+    }
+
+    return insertQuery;
   }
 
-  async update(qry: string | UpdateProps) {
-    const connection: DatabaseConnection = await this.getConnection();
-    const result = await connection.update(qry);
-    connection.release();
+  update(qryProps?: UpdateProps): IUpdateQuery {
+    const updateQuery = new UpdateQuery(this);
 
-    return result;
+    if (qryProps) {
+      updateQuery.import(qryProps);
+    }
+
+    return updateQuery;
   }
 
-  async delete(qry: string | DeleteProps) {
-    const connection: DatabaseConnection = await this.getConnection();
-    const result = await connection.delete(qry);
-    connection.release();
+  delete(qryProps?: DeleteProps): IDeleteQuery {
+    const deleteQuery = new DeleteQuery(this);
 
-    return result;
+    if (qryProps) {
+      deleteQuery.import(qryProps);
+    }
+
+    return deleteQuery;
+  }
+
+  createTable(qryProps?: CreateTableProps): ICreateTableQuery {
+    const createTableQuery = new CreateTableQuery(this);
+
+    if (qryProps) {
+      createTableQuery.import(qryProps);
+    }
+
+    return createTableQuery;
+  }
+
+  tableExists(qryProps?: TableExistsProps): ITableExistsQuery {
+    const tableExistsQuery = new TableExistsQuery(this);
+
+    if (qryProps) {
+      tableExistsQuery.import(qryProps);
+    }
+
+    return tableExistsQuery;
   }
 
   escape(value: unknown): string {

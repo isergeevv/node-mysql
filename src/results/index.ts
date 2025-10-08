@@ -1,2 +1,5 @@
-export { default as QryResult } from './QryResult';
-export { default as QrySelectResult } from './QrySelectResult';
+export { default as Result } from './Result';
+export { default as SelectResult } from './SelectResult';
+export { default as InsertResult } from './InsertResult';
+export { default as UpdateResult } from './UpdateResult';
+export { default as DeleteResult } from './DeleteResult';
