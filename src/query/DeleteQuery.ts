@@ -31,7 +31,7 @@ export default class DeleteQuery implements IDeleteQuery {
     return this;
   }
 
-  import(qryProps: DeleteProps): IDeleteQuery {
+  import(qryProps: Partial<DeleteProps>): IDeleteQuery {
     this._props = { ...this._props, ...qryProps };
     return this;
   }

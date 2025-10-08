@@ -15,12 +15,12 @@ import type {
 
 export interface IConnection {
   query(qry: string, items?: any[]): Promise<IResult>;
-  select(qryProps?: SelectProps): ISelectQuery;
-  insert(qryProps?: InsertProps): IInsertQuery;
-  update(qryProps?: UpdateProps): IUpdateQuery;
-  delete(qryProps?: DeleteProps): IDeleteQuery;
-  createTable(qryProps?: CreateTableProps): ICreateTableQuery;
-  tableExists(qryProps?: TableExistsProps): ITableExistsQuery;
+  select(qryProps?: Partial<SelectProps>): ISelectQuery;
+  insert(qryProps?: Partial<InsertProps>): IInsertQuery;
+  update(qryProps?: Partial<UpdateProps>): IUpdateQuery;
+  delete(qryProps?: Partial<DeleteProps>): IDeleteQuery;
+  createTable(qryProps?: Partial<CreateTableProps>): ICreateTableQuery;
+  tableExists(qryProps?: Partial<TableExistsProps>): ITableExistsQuery;
   escape(value: unknown): string;
   generateParameterizedQuery(queryString: string, values?: (string | number | bigint)[]): string;
 }

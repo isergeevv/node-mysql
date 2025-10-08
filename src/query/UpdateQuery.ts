@@ -38,7 +38,7 @@ export default class UpdateQuery implements IUpdateQuery {
     return this;
   }
 
-  import(qryProps: UpdateProps): IUpdateQuery {
+  import(qryProps: Partial<UpdateProps>): IUpdateQuery {
     this._props = { ...this._props, ...qryProps };
     return this;
   }

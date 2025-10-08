@@ -85,7 +85,7 @@ export default class SelectQuery implements ISelectQuery {
     return this;
   }
 
-  import(qryProps: SelectProps): ISelectQuery {
+  import(qryProps: Partial<SelectProps>): ISelectQuery {
     this._props = { ...this._props, ...qryProps };
 
     return this;

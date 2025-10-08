@@ -31,8 +31,8 @@ export default class CreateTableQuery implements ICreateTableQuery {
     return this;
   }
 
-  import(props: CreateTableProps): ICreateTableQuery {
-    this._props = { ...this._props, ...props };
+  import(qryProps: Partial<CreateTableProps>): ICreateTableQuery {
+    this._props = { ...this._props, ...qryProps };
     return this;
   }
 

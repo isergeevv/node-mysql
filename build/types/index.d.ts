@@ -74,12 +74,12 @@ interface TableExistsProps {
 
 interface IConnection {
     query(qry: string, items?: any[]): Promise<IResult>;
-    select(qryProps?: SelectProps): ISelectQuery;
-    insert(qryProps?: InsertProps): IInsertQuery;
-    update(qryProps?: UpdateProps): IUpdateQuery;
-    delete(qryProps?: DeleteProps): IDeleteQuery;
-    createTable(qryProps?: CreateTableProps): ICreateTableQuery;
-    tableExists(qryProps?: TableExistsProps): ITableExistsQuery;
+    select(qryProps?: Partial<SelectProps>): ISelectQuery;
+    insert(qryProps?: Partial<InsertProps>): IInsertQuery;
+    update(qryProps?: Partial<UpdateProps>): IUpdateQuery;
+    delete(qryProps?: Partial<DeleteProps>): IDeleteQuery;
+    createTable(qryProps?: Partial<CreateTableProps>): ICreateTableQuery;
+    tableExists(qryProps?: Partial<TableExistsProps>): ITableExistsQuery;
     escape(value: unknown): string;
     generateParameterizedQuery(queryString: string, values?: (string | number | bigint)[]): string;
 }
@@ -210,7 +210,7 @@ declare class DeleteQuery implements IDeleteQuery {
     from(table: string): IDeleteQuery;
     where(where: string): IDeleteQuery;
     setParams(...params: (string | number | bigint)[]): IDeleteQuery;
-    import(qryProps: DeleteProps): IDeleteQuery;
+    import(qryProps: Partial<DeleteProps>): IDeleteQuery;
     export(): string;
     execute(): Promise<IDeleteResult>;
     then(onfulfilled: (value: any) => any, onrejected?: (reason: any) => any): Promise<any>;
@@ -222,7 +222,7 @@ declare class InsertQuery implements IInsertQuery {
     constructor(connection: IConnection);
     into(table: string): IInsertQuery;
     items(items: Record<string, string | number>): IInsertQuery;
-    import(qryProps: InsertProps): IInsertQuery;
+    import(qryProps: Partial<InsertProps>): IInsertQuery;
     export(): string;
     execute(): Promise<IInsertResult>;
     then(onfulfilled: (value: any) => any, onrejected?: (reason: any) => any): Promise<any>;
@@ -242,7 +242,7 @@ declare class SelectQuery implements ISelectQuery {
     startItem(startItem: number): ISelectQuery;
     extra(extra: string): ISelectQuery;
     setParams(...items: (string | number | bigint)[]): ISelectQuery;
-    import(qryProps: SelectProps): ISelectQuery;
+    import(qryProps: Partial<SelectProps>): ISelectQuery;
     export(): string;
     execute(): Promise<ISelectResult>;
     then(onfulfilled: (value: any) => any, onrejected?: (reason: any) => any): Promise<any>;
@@ -256,7 +256,7 @@ declare class UpdateQuery implements IUpdateQuery {
     set(...items: string[]): IUpdateQuery;
     where(where: string): IUpdateQuery;
     setParams(...params: (string | number | bigint)[]): IUpdateQuery;
-    import(qryProps: UpdateProps): IUpdateQuery;
+    import(qryProps: Partial<UpdateProps>): IUpdateQuery;
     export(): string;
     execute(): Promise<IUpdateResult>;
     then(onfulfilled: (value: any) => any, onrejected?: (reason: any) => any): Promise<any>;
@@ -267,7 +267,7 @@ declare class TableExistsQuery implements ITableExistsQuery {
     private _props;
     constructor(connection: IConnection);
     table(table: string): ITableExistsQuery;
-    import(props: TableExistsProps): ITableExistsQuery;
+    import(props: Partial<TableExistsProps>): ITableExistsQuery;
     export(): string;
     execute(): Promise<ITableExistsResult>;
     then(onfulfilled: (value: any) => any, onrejected?: (reason: any) => any): Promise<any>;
@@ -280,7 +280,7 @@ declare class CreateTableQuery implements ICreateTableQuery {
     table(table: string): ICreateTableQuery;
     columns(...columns: Partial<TableColumnData>[]): ICreateTableQuery;
     ifNotExists(ifNotExists?: boolean): ICreateTableQuery;
-    import(props: CreateTableProps): ICreateTableQuery;
+    import(qryProps: Partial<CreateTableProps>): ICreateTableQuery;
     export(): string;
     execute(): Promise<ICreateTableResult>;
     then(onfulfilled: (value: any) => any, onrejected?: (reason: any) => any): Promise<any>;
@@ -297,12 +297,12 @@ declare class Database implements IDatabase {
     getConnection(): Promise<IDatabaseConnection>;
     beginTransaction(): Promise<IDatabaseConnection>;
     query(qry: string, items?: QryItems): Promise<IResult>;
-    select(qryProps?: SelectProps): ISelectQuery;
-    insert(qryProps?: InsertProps): IInsertQuery;
-    update(qryProps?: UpdateProps): IUpdateQuery;
-    delete(qryProps?: DeleteProps): IDeleteQuery;
-    createTable(qryProps?: CreateTableProps): ICreateTableQuery;
-    tableExists(qryProps?: TableExistsProps): ITableExistsQuery;
+    select(qryProps?: Partial<SelectProps>): ISelectQuery;
+    insert(qryProps?: Partial<InsertProps>): IInsertQuery;
+    update(qryProps?: Partial<UpdateProps>): IUpdateQuery;
+    delete(qryProps?: Partial<DeleteProps>): IDeleteQuery;
+    createTable(qryProps?: Partial<CreateTableProps>): ICreateTableQuery;
+    tableExists(qryProps?: Partial<TableExistsProps>): ITableExistsQuery;
     escape(value: unknown): string;
     generateParameterizedQuery(queryString: string, values?: (string | number)[]): string;
     close(): void;
@@ -317,12 +317,12 @@ declare class DatabaseConnection implements IDatabaseConnection {
     commitTransaction(): Promise<void>;
     rollbackTransaction(): Promise<void>;
     query(qry: string, items?: any[]): Promise<IResult>;
-    select(qryProps?: SelectProps): ISelectQuery;
-    insert(qryProps?: InsertProps): IInsertQuery;
-    update(qryProps?: UpdateProps): IUpdateQuery;
-    delete(qryProps?: DeleteProps): IDeleteQuery;
-    createTable(qryProps?: CreateTableProps): ICreateTableQuery;
-    tableExists(qryProps?: TableExistsProps): ITableExistsQuery;
+    select(qryProps?: Partial<SelectProps>): ISelectQuery;
+    insert(qryProps?: Partial<InsertProps>): IInsertQuery;
+    update(qryProps?: Partial<UpdateProps>): IUpdateQuery;
+    delete(qryProps?: Partial<DeleteProps>): IDeleteQuery;
+    createTable(qryProps?: Partial<CreateTableProps>): ICreateTableQuery;
+    tableExists(qryProps?: Partial<TableExistsProps>): ITableExistsQuery;
     escape(value: unknown): string;
     generateParameterizedQuery(queryString: string, values?: (string | number | bigint)[]): string;
     release(): void;

@@ -53,7 +53,7 @@ export default class DatabaseConnection implements IDatabaseConnection {
     }
   }
 
-  select(qryProps?: SelectProps): ISelectQuery {
+  select(qryProps?: Partial<SelectProps>): ISelectQuery {
     const selectQuery = new SelectQuery(this);
 
     if (qryProps) {
@@ -63,7 +63,7 @@ export default class DatabaseConnection implements IDatabaseConnection {
     return selectQuery;
   }
 
-  insert(qryProps?: InsertProps): IInsertQuery {
+  insert(qryProps?: Partial<InsertProps>): IInsertQuery {
     const insertQuery = new InsertQuery(this);
 
     if (qryProps) {
@@ -73,7 +73,7 @@ export default class DatabaseConnection implements IDatabaseConnection {
     return insertQuery;
   }
 
-  update(qryProps?: UpdateProps): IUpdateQuery {
+  update(qryProps?: Partial<UpdateProps>): IUpdateQuery {
     const updateQuery = new UpdateQuery(this);
 
     if (qryProps) {
@@ -83,7 +83,7 @@ export default class DatabaseConnection implements IDatabaseConnection {
     return updateQuery;
   }
 
-  delete(qryProps?: DeleteProps): IDeleteQuery {
+  delete(qryProps?: Partial<DeleteProps>): IDeleteQuery {
     const deleteQuery = new DeleteQuery(this);
 
     if (qryProps) {
@@ -93,7 +93,7 @@ export default class DatabaseConnection implements IDatabaseConnection {
     return deleteQuery;
   }
 
-  createTable(qryProps?: CreateTableProps): ICreateTableQuery {
+  createTable(qryProps?: Partial<CreateTableProps>): ICreateTableQuery {
     const createTableQuery = new CreateTableQuery(this);
 
     if (qryProps) {
@@ -103,7 +103,7 @@ export default class DatabaseConnection implements IDatabaseConnection {
     return createTableQuery;
   }
 
-  tableExists(qryProps?: TableExistsProps): ITableExistsQuery {
+  tableExists(qryProps?: Partial<TableExistsProps>): ITableExistsQuery {
     const tableExistsQuery = new TableExistsQuery(this);
 
     if (qryProps) {

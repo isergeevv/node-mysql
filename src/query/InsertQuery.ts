@@ -25,7 +25,7 @@ export default class InsertQuery implements IInsertQuery {
     return this;
   }
 
-  import(qryProps: InsertProps): IInsertQuery {
+  import(qryProps: Partial<InsertProps>): IInsertQuery {
     this._props = { ...this._props, ...qryProps };
     return this;
   }

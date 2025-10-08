@@ -19,7 +19,7 @@ export default class TableExistsQuery implements ITableExistsQuery {
     return this;
   }
 
-  import(props: TableExistsProps): ITableExistsQuery {
+  import(props: Partial<TableExistsProps>): ITableExistsQuery {
     this._props = { ...this._props, ...props };
     return this;
   }

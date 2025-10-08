@@ -415,8 +415,8 @@ class CreateTableQuery {
         this._props.ifNotExists = ifNotExists;
         return this;
     }
-    import(props) {
-        this._props = { ...this._props, ...props };
+    import(qryProps) {
+        this._props = { ...this._props, ...qryProps };
         return this;
     }
     export() {
