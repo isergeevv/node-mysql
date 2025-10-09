@@ -73,13 +73,13 @@ export type IResult = IBaseResult &
   ICreateTableResult &
   ITableExistsResult;
 
-export interface IQuery {
+export interface IQuery<T extends IBaseResult = IBaseResult> {
   export(): string;
-  execute(): Promise<IBaseResult>;
-  then(resolve: (value: string) => void, reject?: (reason: Error) => void): Promise<IBaseResult>;
+  execute(): Promise<T>;
+  then(resolve: (value: T) => void, reject?: (reason: Error) => void): Promise<T>;
 }
 
-export interface ISelectQuery extends IQuery {
+export interface ISelectQuery extends IQuery<ISelectResult> {
   items(...items: string[]): ISelectQuery;
   forUpdate(forUpdate?: boolean): ISelectQuery;
   from(table: string): ISelectQuery;
@@ -89,38 +89,38 @@ export interface ISelectQuery extends IQuery {
   order(order: SelectOrder): ISelectQuery;
   extra(extra: string): ISelectQuery;
   setParams(...items: (string | number | bigint)[]): ISelectQuery;
-  import(props: SelectProps): ISelectQuery;
+  import(props: Partial<SelectProps>): ISelectQuery;
 }
 
-export interface IInsertQuery extends IQuery {
+export interface IInsertQuery extends IQuery<IInsertResult> {
   into(table: string): IInsertQuery;
   items(items: Record<string, any>): IInsertQuery;
-  import(props: InsertProps): IInsertQuery;
+  import(props: Partial<InsertProps>): IInsertQuery;
 }
 
-export interface IUpdateQuery extends IQuery {
+export interface IUpdateQuery extends IQuery<IUpdateResult> {
   table(table: string): IUpdateQuery;
   set(set: string | string[]): IUpdateQuery;
   where(...conditions: string[]): IUpdateQuery;
   setParams(...items: (string | number | bigint)[]): IUpdateQuery;
-  import(props: UpdateProps): IUpdateQuery;
+  import(props: Partial<UpdateProps>): IUpdateQuery;
 }
 
-export interface IDeleteQuery extends IQuery {
+export interface IDeleteQuery extends IQuery<IDeleteResult> {
   from(table: string): IDeleteQuery;
   where(...conditions: string[]): IDeleteQuery;
   setParams(...items: (string | number | bigint)[]): IDeleteQuery;
-  import(props: DeleteProps): IDeleteQuery;
+  import(props: Partial<DeleteProps>): IDeleteQuery;
 }
 
-export interface ICreateTableQuery extends IQuery {
+export interface ICreateTableQuery extends IQuery<ICreateTableResult> {
   table(table: string): ICreateTableQuery;
   columns(...columns: Partial<TableColumnData>[]): ICreateTableQuery;
   ifNotExists(ifNotExists?: boolean): ICreateTableQuery;
-  import(props: CreateTableProps): ICreateTableQuery;
+  import(props: Partial<CreateTableProps>): ICreateTableQuery;
 }
 
-export interface ITableExistsQuery extends IQuery {
+export interface ITableExistsQuery extends IQuery<ITableExistsResult> {
   table(table: string): ITableExistsQuery;
-  import(props: CreateTableProps): ITableExistsQuery;
+  import(props: Partial<TableExistsProps>): ITableExistsQuery;
 }
