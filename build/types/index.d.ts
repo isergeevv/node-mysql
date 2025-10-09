@@ -116,7 +116,8 @@ interface ICreateTableResult extends IBaseResult {
 }
 interface ITableExistsResult extends IBaseResult {
 }
-type IResult = IBaseResult & ISelectResult & IUpdateResult & IDeleteResult & IInsertResult & ICreateTableResult & ITableExistsResult;
+interface IResult extends IBaseResult, ISelectResult, IUpdateResult, IDeleteResult, IInsertResult, ICreateTableResult, ITableExistsResult {
+}
 interface IQuery<T extends IBaseResult = IBaseResult> {
     export(): string;
     execute(): Promise<T>;
