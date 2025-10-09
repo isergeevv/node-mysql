@@ -25,7 +25,7 @@ import InsertQuery from './query/InsertQuery';
 import UpdateQuery from './query/UpdateQuery';
 import DeleteQuery from './query/DeleteQuery';
 import CreateTableQuery from './query/CreateTableQuery';
-import { TableExistsQuery } from './query';
+import TableExistsQuery from './query/TableExistsQuery';
 
 export default class Database implements IDatabase {
   private _pool: Pool;

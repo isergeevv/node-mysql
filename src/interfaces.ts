@@ -65,13 +65,14 @@ export interface ICreateTableResult extends IBaseResult {}
 
 export interface ITableExistsResult extends IBaseResult {}
 
-export type IResult = IBaseResult &
-  ISelectResult &
-  IUpdateResult &
-  IDeleteResult &
-  IInsertResult &
-  ICreateTableResult &
-  ITableExistsResult;
+export type IResult =
+  | IBaseResult
+  | ISelectResult
+  | IUpdateResult
+  | IDeleteResult
+  | IInsertResult
+  | ICreateTableResult
+  | ITableExistsResult;
 
 export interface IQuery<T extends IBaseResult = IBaseResult> {
   export(): string;
