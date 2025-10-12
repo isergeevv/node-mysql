@@ -287,8 +287,8 @@ declare class CreateTableQuery implements ICreateTableQuery {
     then(onfulfilled: (value: any) => any, onrejected?: (reason: any) => any): Promise<any>;
 }
 
-declare const AND: (a: string, b: string) => string;
-declare const OR: (a: string, b: string) => string;
+declare const AND: (...args: string[]) => string;
+declare const OR: (...args: string[]) => string;
 
 declare class Database implements IDatabase {
     private _pool;

@@ -1,2 +1,2 @@
-export const AND = (a: string, b: string): string => `(${a} AND ${b})`;
-export const OR = (a: string, b: string): string => `(${a} OR ${b})`;
+export const AND = (...args: string[]): string => `(${args.join(' AND ')})`;
+export const OR = (...args: string[]): string => `(${args.join(' OR ')})`;

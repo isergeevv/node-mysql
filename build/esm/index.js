@@ -465,8 +465,8 @@ class CreateTableQuery {
     }
 }
 
-const AND = (a, b) => `(${a} AND ${b})`;
-const OR = (a, b) => `(${a} OR ${b})`;
+const AND = (...args) => `(${args.join(' AND ')})`;
+const OR = (...args) => `(${args.join(' OR ')})`;
 
 class DatabaseConnection {
     _connection;
