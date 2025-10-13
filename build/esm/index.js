@@ -32,6 +32,10 @@ class Result {
     get fields() {
         return this._result[1];
     }
+    get exists() {
+        const rows = this._result[0];
+        return rows.length > 0 && rows[0]['COUNT(*)'] === 1;
+    }
     get raw() {
         return this._result;
     }

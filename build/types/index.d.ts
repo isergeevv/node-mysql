@@ -115,6 +115,7 @@ interface IInsertResult extends IBaseResult {
 interface ICreateTableResult extends IBaseResult {
 }
 interface ITableExistsResult extends IBaseResult {
+    get exists(): boolean;
 }
 interface IResult extends IBaseResult, ISelectResult, IUpdateResult, IDeleteResult, IInsertResult, ICreateTableResult, ITableExistsResult {
 }
@@ -172,6 +173,7 @@ declare class Result implements IResult {
     get rows(): ResultRow[];
     get headers(): ResultSetHeader;
     get fields(): ResultField[];
+    get exists(): boolean;
     get raw(): [QueryResult, FieldPacket[]];
 }
 

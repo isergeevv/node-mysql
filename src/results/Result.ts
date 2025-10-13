@@ -29,6 +29,11 @@ export default class Result implements IResult {
     return this._result[1] as ResultField[];
   }
 
+  get exists(): boolean {
+    const rows = this._result[0] as any[];
+    return rows.length > 0 && rows[0]['COUNT(*)'] === 1;
+  }
+
   get raw(): [QueryResult, FieldPacket[]] {
     return this._result;
   }

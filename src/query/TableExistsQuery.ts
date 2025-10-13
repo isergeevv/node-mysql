@@ -1,4 +1,4 @@
-import type { ITableExistsQuery, IDatabaseConnection, ITableExistsResult, IDatabase, IConnection } from '../interfaces';
+import type { ITableExistsQuery, ITableExistsResult, IConnection } from '../interfaces';
 import type { TableExistsProps } from '../types';
 import TableExistsResult from '../results/TableExistsResult';
 

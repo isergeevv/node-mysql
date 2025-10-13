@@ -63,7 +63,9 @@ export interface IInsertResult extends IBaseResult {
 
 export interface ICreateTableResult extends IBaseResult {}
 
-export interface ITableExistsResult extends IBaseResult {}
+export interface ITableExistsResult extends IBaseResult {
+  get exists(): boolean;
+}
 
 export interface IResult
   extends IBaseResult,
