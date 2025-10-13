@@ -29,7 +29,7 @@ export default class TableExistsQuery implements ITableExistsQuery {
       throw new Error('[TableExistsQuery] Missing table.');
     }
 
-    return `SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ${this._connection.escape(
+    return `SELECT CAST(COUNT(*) AS int) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ${this._connection.escape(
       this._props.table,
     )};`;
   }

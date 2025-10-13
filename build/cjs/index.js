@@ -377,7 +377,7 @@ class TableExistsQuery {
         if (!this._props.table.length) {
             throw new Error('[TableExistsQuery] Missing table.');
         }
-        return `SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ${this._connection.escape(this._props.table)};`;
+        return `SELECT CAST(COUNT(*) AS int) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ${this._connection.escape(this._props.table)};`;
     }
     async execute() {
         const qryResult = await this._connection.query(this.export());
