@@ -10,7 +10,7 @@ export default class TableExistsResult implements ITableExistsResult {
 
   get exists(): boolean {
     const rows = this._result[0] as any[];
-    return rows.length > 0 && rows[0]['count'] === 1;
+    return rows.length > 0 && rows[0]['count'] === 1n;
   }
 
   get raw(): [QueryResult, FieldPacket[]] {
