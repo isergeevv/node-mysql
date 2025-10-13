@@ -36,7 +36,7 @@ class Result {
     }
     get exists() {
         const rows = this._result[0];
-        return rows.length > 0 && rows[0]['COUNT(*)'] === 1;
+        return rows.length > 0 && rows[0]['count'] === 1;
     }
     get raw() {
         return this._result;
@@ -349,7 +349,7 @@ class TableExistsResult {
     }
     get exists() {
         const rows = this._result[0];
-        return rows.length > 0 && rows[0]['COUNT(*)'] === 1;
+        return rows.length > 0 && rows[0]['count'] === 1;
     }
     get raw() {
         return this._result;
@@ -377,7 +377,7 @@ class TableExistsQuery {
         if (!this._props.table.length) {
             throw new Error('[TableExistsQuery] Missing table.');
         }
-        return `SELECT CAST(COUNT(*) AS int) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ${this._connection.escape(this._props.table)};`;
+        return `SELECT CAST(COUNT(*) AS int) as count FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ${this._connection.escape(this._props.table)};`;
     }
     async execute() {
         const qryResult = await this._connection.query(this.export());
