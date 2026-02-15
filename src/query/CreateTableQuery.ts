@@ -14,6 +14,7 @@ export default class CreateTableQuery implements ICreateTableQuery {
       columns: [],
       ifNotExists: false,
       unique: [],
+      checks: {},
     };
   }
 
@@ -62,8 +63,21 @@ export default class CreateTableQuery implements ICreateTableQuery {
     return this;
   }
 
+  checks(checks: Record<string, string>): ICreateTableQuery {
+    this._props.checks = { ...this._props.checks, ...checks };
+
+    return this;
+  }
+
+  check(name: string, check: string): ICreateTableQuery {
+    this._props.checks[name] = check;
+
+    return this;
+  }
+
   import(qryProps: Partial<CreateTableProps>): ICreateTableQuery {
     this._props = { ...this._props, ...qryProps };
+
     return this;
   }
 
@@ -82,47 +96,59 @@ export default class CreateTableQuery implements ICreateTableQuery {
 
     qry = qry.concat(' (');
 
-    qry = qry.concat(
-      this._props.columns
-        .map((columnData) => {
-          let c: string = '';
+    if (this._props.columns.length > 0) {
+      qry = qry.concat(
+        this._props.columns
+          .map((columnData) => {
+            let c: string = '';
 
-          if (!columnData.name) {
-            throw new Error(`[CreateTableQuery] Column missing name.`);
-          }
+            if (!columnData.name) {
+              throw new Error(`[CreateTableQuery] Column missing name.`);
+            }
 
-          c = c.concat(columnData.name);
+            c = c.concat(columnData.name);
 
-          if (!columnData.type) {
-            throw new Error(`[CreateTableQuery] Column missing type.`);
-          }
+            if (!columnData.type) {
+              throw new Error(`[CreateTableQuery] Column missing type.`);
+            }
 
-          c = c.concat(` ${columnData.type}`);
+            c = c.concat(` ${columnData.type}`);
 
-          if (columnData.isAutoIncrement) {
-            c = c.concat(` AUTO_INCREMENT`);
-          }
+            if (columnData.isAutoIncrement) {
+              c = c.concat(` AUTO_INCREMENT`);
+            }
 
-          if (columnData.isPrimary) {
-            c = c.concat(` PRIMARY KEY`);
-          }
+            if (columnData.isPrimary) {
+              c = c.concat(` PRIMARY KEY`);
+            }
 
-          if (columnData.isUnique) {
-            c = c.concat(` UNIQUE`);
-          }
+            if (columnData.isUnique) {
+              c = c.concat(` UNIQUE`);
+            }
 
-          c = c.concat(columnData.isNull ? ` NULL` : ` NOT NULL`);
+            c = c.concat(columnData.isNull ? ` NULL` : ` NOT NULL`);
 
-          if (columnData.default) {
-            c = c.concat(` DEFAULT ${columnData.default}`);
-          }
+            if (columnData.default) {
+              c = c.concat(` DEFAULT ${columnData.default}`);
+            }
 
-          return c;
-        })
-        .join(', '),
-    );
+            return c;
+          })
+          .join(', '),
+      );
+    }
 
-    qry = qry.concat(this._props.unique.map((columnNames) => `, UNIQUE (${columnNames.join(', ')})`).join(''));
+    if (this._props.unique.length > 0) {
+      qry = qry.concat(this._props.unique.map((columnNames) => `, UNIQUE (${columnNames.join(', ')})`).join(''));
+    }
+
+    const checkKeys = Object.keys(this._props.checks);
+
+    if (checkKeys.length > 0) {
+      qry = qry.concat(
+        `, ${checkKeys.map((checkName) => `CONSTRAINT ${checkName} CHECK (${this._props.checks[checkName]})`).join(', ')}`,
+      );
+    }
 
     qry = qry.concat(' );');
 

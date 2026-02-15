@@ -68,7 +68,8 @@ export interface ITableExistsResult extends IBaseResult {
 }
 
 export interface IResult
-  extends IBaseResult,
+  extends
+    IBaseResult,
     ISelectResult,
     IUpdateResult,
     IDeleteResult,
@@ -118,8 +119,11 @@ export interface IDeleteQuery extends IQuery<IDeleteResult> {
 
 export interface ICreateTableQuery extends IQuery<ICreateTableResult> {
   table(table: string): ICreateTableQuery;
-  columns(...columns: Partial<TableColumnData>[]): ICreateTableQuery;
   ifNotExists(ifNotExists?: boolean): ICreateTableQuery;
+  columns(...columns: Partial<TableColumnData>[]): ICreateTableQuery;
+  unique(...columnNameGroups: (string | string[])[]): ICreateTableQuery;
+  checks(checks: Record<string, string>): ICreateTableQuery;
+  check(name: string, check: string): ICreateTableQuery;
   import(props: Partial<CreateTableProps>): ICreateTableQuery;
 }
 

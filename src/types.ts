@@ -79,6 +79,7 @@ export interface CreateTableProps {
   ifNotExists: boolean;
   columns: Partial<TableColumnData>[];
   unique: string[][];
+  checks: Record<string, string>;
 }
 
 export interface TableExistsProps {
