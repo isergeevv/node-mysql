@@ -76,8 +76,9 @@ export interface DeleteProps {
 
 export interface CreateTableProps {
   table: string;
-  columns: Partial<TableColumnData>[];
   ifNotExists: boolean;
+  columns: Partial<TableColumnData>[];
+  unique: string[][];
 }
 
 export interface TableExistsProps {

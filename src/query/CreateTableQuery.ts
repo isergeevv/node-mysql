@@ -13,6 +13,7 @@ export default class CreateTableQuery implements ICreateTableQuery {
       table: '',
       columns: [],
       ifNotExists: false,
+      unique: [],
     };
   }
 
@@ -21,13 +22,43 @@ export default class CreateTableQuery implements ICreateTableQuery {
     return this;
   }
 
+  ifNotExists(ifNotExists: boolean = true): ICreateTableQuery {
+    this._props.ifNotExists = ifNotExists;
+    return this;
+  }
+
   columns(...columns: Partial<TableColumnData>[]): ICreateTableQuery {
     this._props.columns.push(...columns);
     return this;
   }
 
-  ifNotExists(ifNotExists: boolean = true): ICreateTableQuery {
-    this._props.ifNotExists = ifNotExists;
+  unique(...columnNameGroups: (string | string[])[]): ICreateTableQuery {
+    const currentColumnNames = this._props.columns.map((c) => c.name);
+
+    for (let i = 0; i < columnNameGroups.length; i++) {
+      if (typeof columnNameGroups[i] === 'string') {
+        const columnName = columnNameGroups[i] as string;
+
+        if (!currentColumnNames.includes(columnName)) {
+          throw new Error(`[CreateTableQuery] Trying to set unique column '${columnName}' that does not exist.`);
+        }
+
+        this._props.unique.push([columnName]);
+
+        continue;
+      }
+
+      const columnNames = columnNameGroups[i] as string[];
+
+      for (const columnName of columnNames) {
+        if (!currentColumnNames.includes(columnName)) {
+          throw new Error(`[CreateTableQuery] Trying to set unique column '${columnName}' that does not exist.`);
+        }
+      }
+
+      this._props.unique.push(columnNames);
+    }
+
     return this;
   }
 
@@ -41,49 +72,59 @@ export default class CreateTableQuery implements ICreateTableQuery {
       throw new Error('[CreateTableQuery] Missing table.');
     }
 
-    let qry = `CREATE TABLE ${this._props.table}`;
+    let qry = `CREATE TABLE`;
 
     if (this._props.ifNotExists) {
       qry = qry.concat(' IF NOT EXISTS');
     }
 
-    qry = qry.concat(` (
-      ${this._props.columns.map((columnData) => {
-        let c: string = '';
+    qry = qry.concat(` ${this._props.table}`);
 
-        if (!columnData.name) {
-          throw new Error(`[CreateTableQuery] Column missing name.`);
-        }
+    qry = qry.concat(' (');
 
-        c = c.concat(columnData.name);
+    qry = qry.concat(
+      this._props.columns
+        .map((columnData) => {
+          let c: string = '';
 
-        if (!columnData.type) {
-          throw new Error(`[CreateTableQuery] Column missing type.`);
-        }
+          if (!columnData.name) {
+            throw new Error(`[CreateTableQuery] Column missing name.`);
+          }
 
-        c = c.concat(` ${columnData.type}`);
+          c = c.concat(columnData.name);
 
-        if (columnData.isAutoIncrement) {
-          c = c.concat(` AUTO_INCREMENT`);
-        }
+          if (!columnData.type) {
+            throw new Error(`[CreateTableQuery] Column missing type.`);
+          }
 
-        if (columnData.isPrimary) {
-          c = c.concat(` PRIMARY KEY`);
-        }
+          c = c.concat(` ${columnData.type}`);
 
-        if (columnData.isUnique) {
-          c = c.concat(` UNIQUE`);
-        }
+          if (columnData.isAutoIncrement) {
+            c = c.concat(` AUTO_INCREMENT`);
+          }
 
-        c = c.concat(columnData.isNull ? ` NULL` : ` NOT NULL`);
+          if (columnData.isPrimary) {
+            c = c.concat(` PRIMARY KEY`);
+          }
 
-        if (columnData.default) {
-          c = c.concat(` DEFAULT ${columnData.default}`);
-        }
+          if (columnData.isUnique) {
+            c = c.concat(` UNIQUE`);
+          }
 
-        return c;
-      })}
-    );`);
+          c = c.concat(columnData.isNull ? ` NULL` : ` NOT NULL`);
+
+          if (columnData.default) {
+            c = c.concat(` DEFAULT ${columnData.default}`);
+          }
+
+          return c;
+        })
+        .join(', '),
+    );
+
+    qry = qry.concat(this._props.unique.map((columnNames) => `, UNIQUE (${columnNames.join(', ')})`).join(''));
+
+    qry = qry.concat(' );');
 
     return qry;
   }

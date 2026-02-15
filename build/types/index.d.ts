@@ -65,8 +65,9 @@ interface DeleteProps {
 }
 interface CreateTableProps {
     table: string;
-    columns: Partial<TableColumnData>[];
     ifNotExists: boolean;
+    columns: Partial<TableColumnData>[];
+    unique: string[][];
 }
 interface TableExistsProps {
     table: string;
@@ -281,8 +282,9 @@ declare class CreateTableQuery implements ICreateTableQuery {
     private _props;
     constructor(connection: IConnection);
     table(table: string): ICreateTableQuery;
-    columns(...columns: Partial<TableColumnData>[]): ICreateTableQuery;
     ifNotExists(ifNotExists?: boolean): ICreateTableQuery;
+    columns(...columns: Partial<TableColumnData>[]): ICreateTableQuery;
+    unique(...columnNameGroups: (string | string[])[]): ICreateTableQuery;
     import(qryProps: Partial<CreateTableProps>): ICreateTableQuery;
     export(): string;
     execute(): Promise<ICreateTableResult>;

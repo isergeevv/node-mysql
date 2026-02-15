@@ -407,18 +407,40 @@ class CreateTableQuery {
             table: '',
             columns: [],
             ifNotExists: false,
+            unique: [],
         };
     }
     table(table) {
         this._props.table = table;
         return this;
     }
+    ifNotExists(ifNotExists = true) {
+        this._props.ifNotExists = ifNotExists;
+        return this;
+    }
     columns(...columns) {
         this._props.columns.push(...columns);
         return this;
     }
-    ifNotExists(ifNotExists = true) {
-        this._props.ifNotExists = ifNotExists;
+    unique(...columnNameGroups) {
+        const currentColumnNames = this._props.columns.map((c) => c.name);
+        for (let i = 0; i < columnNameGroups.length; i++) {
+            if (typeof columnNameGroups[i] === 'string') {
+                const columnName = columnNameGroups[i];
+                if (!currentColumnNames.includes(columnName)) {
+                    throw new Error(`[CreateTableQuery] Trying to set unique column '${columnName}' that does not exist.`);
+                }
+                this._props.unique.push([columnName]);
+                continue;
+            }
+            const columnNames = columnNameGroups[i];
+            for (const columnName of columnNames) {
+                if (!currentColumnNames.includes(columnName)) {
+                    throw new Error(`[CreateTableQuery] Trying to set unique column '${columnName}' that does not exist.`);
+                }
+            }
+            this._props.unique.push(columnNames);
+        }
         return this;
     }
     import(qryProps) {
@@ -429,12 +451,14 @@ class CreateTableQuery {
         if (!this._props.table.length) {
             throw new Error('[CreateTableQuery] Missing table.');
         }
-        let qry = `CREATE TABLE ${this._props.table}`;
+        let qry = `CREATE TABLE`;
         if (this._props.ifNotExists) {
             qry = qry.concat(' IF NOT EXISTS');
         }
-        qry = qry.concat(` (
-      ${this._props.columns.map((columnData) => {
+        qry = qry.concat(` ${this._props.table}`);
+        qry = qry.concat(' (');
+        qry = qry.concat(this._props.columns
+            .map((columnData) => {
             let c = '';
             if (!columnData.name) {
                 throw new Error(`[CreateTableQuery] Column missing name.`);
@@ -458,8 +482,10 @@ class CreateTableQuery {
                 c = c.concat(` DEFAULT ${columnData.default}`);
             }
             return c;
-        })}
-    );`);
+        })
+            .join(', '));
+        qry = qry.concat(this._props.unique.map((columnNames) => `, UNIQUE (${columnNames.join(', ')})`).join(''));
+        qry = qry.concat(' );');
         return qry;
     }
     async execute() {
