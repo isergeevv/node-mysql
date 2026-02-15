@@ -122,8 +122,8 @@ export interface ICreateTableQuery extends IQuery<ICreateTableResult> {
   ifNotExists(ifNotExists?: boolean): ICreateTableQuery;
   columns(...columns: Partial<TableColumnData>[]): ICreateTableQuery;
   unique(...columnNameGroups: (string | string[])[]): ICreateTableQuery;
-  checks(checks: Record<string, string>): ICreateTableQuery;
-  check(name: string, check: string): ICreateTableQuery;
+  constraints(constraints: Record<string, string>): ICreateTableQuery;
+  constraint(name: string, constraint: string): ICreateTableQuery;
   import(props: Partial<CreateTableProps>): ICreateTableQuery;
 }
 

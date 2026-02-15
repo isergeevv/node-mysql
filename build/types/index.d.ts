@@ -68,7 +68,7 @@ interface CreateTableProps {
     ifNotExists: boolean;
     columns: Partial<TableColumnData>[];
     unique: string[][];
-    checks: Record<string, string>;
+    constraints: Record<string, string>;
 }
 interface TableExistsProps {
     table: string;
@@ -161,8 +161,8 @@ interface ICreateTableQuery extends IQuery<ICreateTableResult> {
     ifNotExists(ifNotExists?: boolean): ICreateTableQuery;
     columns(...columns: Partial<TableColumnData>[]): ICreateTableQuery;
     unique(...columnNameGroups: (string | string[])[]): ICreateTableQuery;
-    checks(checks: Record<string, string>): ICreateTableQuery;
-    check(name: string, check: string): ICreateTableQuery;
+    constraints(constraints: Record<string, string>): ICreateTableQuery;
+    constraint(name: string, constraint: string): ICreateTableQuery;
     import(props: Partial<CreateTableProps>): ICreateTableQuery;
 }
 interface ITableExistsQuery extends IQuery<ITableExistsResult> {
@@ -289,8 +289,8 @@ declare class CreateTableQuery implements ICreateTableQuery {
     ifNotExists(ifNotExists?: boolean): ICreateTableQuery;
     columns(...columns: Partial<TableColumnData>[]): ICreateTableQuery;
     unique(...columnNameGroups: (string | string[])[]): ICreateTableQuery;
-    checks(checks: Record<string, string>): ICreateTableQuery;
-    check(name: string, check: string): ICreateTableQuery;
+    constraints(constraints: Record<string, string>): ICreateTableQuery;
+    constraint(name: string, constraint: string): ICreateTableQuery;
     import(qryProps: Partial<CreateTableProps>): ICreateTableQuery;
     export(): string;
     execute(): Promise<ICreateTableResult>;

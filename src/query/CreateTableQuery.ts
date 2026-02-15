@@ -14,7 +14,7 @@ export default class CreateTableQuery implements ICreateTableQuery {
       columns: [],
       ifNotExists: false,
       unique: [],
-      checks: {},
+      constraints: {},
     };
   }
 
@@ -63,14 +63,14 @@ export default class CreateTableQuery implements ICreateTableQuery {
     return this;
   }
 
-  checks(checks: Record<string, string>): ICreateTableQuery {
-    this._props.checks = { ...this._props.checks, ...checks };
+  constraints(constraints: Record<string, string>): ICreateTableQuery {
+    this._props.constraints = { ...this._props.constraints, ...constraints };
 
     return this;
   }
 
-  check(name: string, check: string): ICreateTableQuery {
-    this._props.checks[name] = check;
+  constraint(name: string, constraint: string): ICreateTableQuery {
+    this._props.constraints[name] = constraint;
 
     return this;
   }
@@ -142,11 +142,11 @@ export default class CreateTableQuery implements ICreateTableQuery {
       qry = qry.concat(this._props.unique.map((columnNames) => `, UNIQUE (${columnNames.join(', ')})`).join(''));
     }
 
-    const checkKeys = Object.keys(this._props.checks);
+    const constraintKeys = Object.keys(this._props.constraints);
 
-    if (checkKeys.length > 0) {
+    if (constraintKeys.length > 0) {
       qry = qry.concat(
-        `, ${checkKeys.map((checkName) => `CONSTRAINT ${checkName} CHECK (${this._props.checks[checkName]})`).join(', ')}`,
+        `, ${constraintKeys.map((constraintName) => `CONSTRAINT ${constraintName} CHECK (${this._props.constraints[constraintName]})`).join(', ')}`,
       );
     }
 

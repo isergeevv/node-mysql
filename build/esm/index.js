@@ -406,7 +406,7 @@ class CreateTableQuery {
             columns: [],
             ifNotExists: false,
             unique: [],
-            checks: {},
+            constraints: {},
         };
     }
     table(table) {
@@ -442,12 +442,12 @@ class CreateTableQuery {
         }
         return this;
     }
-    checks(checks) {
-        this._props.checks = { ...this._props.checks, ...checks };
+    constraints(constraints) {
+        this._props.constraints = { ...this._props.constraints, ...constraints };
         return this;
     }
-    check(name, check) {
-        this._props.checks[name] = check;
+    constraint(name, constraint) {
+        this._props.constraints[name] = constraint;
         return this;
     }
     import(qryProps) {
@@ -496,9 +496,9 @@ class CreateTableQuery {
         if (this._props.unique.length > 0) {
             qry = qry.concat(this._props.unique.map((columnNames) => `, UNIQUE (${columnNames.join(', ')})`).join(''));
         }
-        const checkKeys = Object.keys(this._props.checks);
-        if (checkKeys.length > 0) {
-            qry = qry.concat(`, ${checkKeys.map((checkName) => `CONSTRAINT ${checkName} CHECK (${this._props.checks[checkName]})`).join(', ')}`);
+        const constraintKeys = Object.keys(this._props.constraints);
+        if (constraintKeys.length > 0) {
+            qry = qry.concat(`, ${constraintKeys.map((constraintName) => `CONSTRAINT ${constraintName} CHECK (${this._props.constraints[constraintName]})`).join(', ')}`);
         }
         qry = qry.concat(' );');
         return qry;
