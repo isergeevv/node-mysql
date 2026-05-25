@@ -23,6 +23,9 @@
   "keywords": [],
   "author": "isergeevv",
   "license": "MIT",
+  "files": [
+    "build"
+  ],
   "bugs": {
     "url": "https://github.com/isergeevv/node-mysql/issues"
   },
