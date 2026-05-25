@@ -1,4 +1,4 @@
-import { FieldPacket, PoolConnection, Pool, QueryResult, ResultSetHeader } from 'mysql2/promise';
+import { FieldPacket, QueryResult, Pool, ResultSetHeader, PoolConnection } from 'mysql2/promise';
 import { QueryResult as QueryResult$1, FieldPacket as FieldPacket$1 } from 'mysql2';
 
 type ResultRow = Record<string, any>;
@@ -73,6 +73,17 @@ interface CreateTableProps {
 interface TableExistsProps {
     table: string;
 }
+interface QueryableConnection {
+    query<T extends QueryResult>(sql: string, values?: any): Promise<[T, FieldPacket[]]>;
+    execute<T extends QueryResult>(sql: string, values?: any): Promise<[T, FieldPacket[]]>;
+    beginTransaction(): Promise<void>;
+    commit(): Promise<void>;
+    rollback(): Promise<void>;
+    release(): void;
+    release(): void;
+    escape(value: any): string;
+    [Symbol.asyncDispose](): Promise<void>;
+}
 
 interface IConnection {
     query(qry: string, items?: any[]): Promise<IResult>;
@@ -86,7 +97,7 @@ interface IConnection {
     generateParameterizedQuery(queryString: string, values?: (string | number | bigint)[]): string;
 }
 interface IDatabaseConnection extends IConnection {
-    get connection(): PoolConnection;
+    get connection(): QueryableConnection;
     beginTransaction(): Promise<void>;
     commitTransaction(): Promise<void>;
     rollbackTransaction(): Promise<void>;
@@ -320,9 +331,9 @@ declare class Database implements IDatabase {
 }
 
 declare class DatabaseConnection implements IDatabaseConnection {
-    private _connection;
+    private _poolConnection;
     constructor(connection: PoolConnection);
-    get connection(): PoolConnection;
+    get connection(): QueryableConnection;
     [Symbol.dispose](): void;
     beginTransaction(): Promise<void>;
     commitTransaction(): Promise<void>;
@@ -339,4 +350,5 @@ declare class DatabaseConnection implements IDatabaseConnection {
     release(): void;
 }
 
-export { AND, CreateTableProps, CreateTableQuery, Database, DatabaseConnection, DeleteProps, DeleteQuery, DeleteResult, IBaseResult, IConnection, ICreateTableQuery, ICreateTableResult, IDatabase, IDatabaseConnection, IDeleteQuery, IDeleteResult, IInsertQuery, IInsertResult, IQuery, IResult, ISelectQuery, ISelectResult, ITableExistsQuery, ITableExistsResult, IUpdateQuery, IUpdateResult, InsertProps, InsertQuery, InsertResult, Join, OR, ORDER_DIRECTION, QryItems, Result, ResultField, ResultRow, SelectOrder, SelectProps, SelectQuery, SelectResult, SelectReturn, TABLE_JOIN_TYPE, TableColumnData, TableExistsProps, TableExistsQuery, UpdateProps, UpdateQuery, UpdateResult };
+export { AND, CreateTableQuery, Database, DatabaseConnection, DeleteQuery, DeleteResult, InsertQuery, InsertResult, OR, ORDER_DIRECTION, Result, SelectQuery, SelectResult, TABLE_JOIN_TYPE, TableExistsQuery, UpdateQuery, UpdateResult };
+export type { CreateTableProps, DeleteProps, IBaseResult, IConnection, ICreateTableQuery, ICreateTableResult, IDatabase, IDatabaseConnection, IDeleteQuery, IDeleteResult, IInsertQuery, IInsertResult, IQuery, IResult, ISelectQuery, ISelectResult, ITableExistsQuery, ITableExistsResult, IUpdateQuery, IUpdateResult, InsertProps, Join, QryItems, QueryableConnection, ResultField, ResultRow, SelectOrder, SelectProps, SelectReturn, TableColumnData, TableExistsProps, UpdateProps };

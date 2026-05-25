@@ -1,4 +1,4 @@
-import type { FieldPacket } from 'mysql2/promise';
+import type { FieldPacket, QueryResult } from 'mysql2/promise';
 
 export type ResultRow = Record<string, any>;
 export type ResultField = FieldPacket;
@@ -84,4 +84,17 @@ export interface CreateTableProps {
 
 export interface TableExistsProps {
   table: string;
+}
+
+// Fix for mysql2/promise types, connection missing query method
+export interface QueryableConnection {
+  query<T extends QueryResult>(sql: string, values?: any): Promise<[T, FieldPacket[]]>;
+  execute<T extends QueryResult>(sql: string, values?: any): Promise<[T, FieldPacket[]]>;
+  beginTransaction(): Promise<void>;
+  commit(): Promise<void>;
+  rollback(): Promise<void>;
+  release(): void;
+  release(): void;
+  escape(value: any): string;
+  [Symbol.asyncDispose](): Promise<void>;
 }

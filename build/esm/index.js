@@ -516,28 +516,28 @@ const AND = (...args) => `(${args.join(' AND ')})`;
 const OR = (...args) => `(${args.join(' OR ')})`;
 
 class DatabaseConnection {
-    _connection;
+    _poolConnection;
     constructor(connection) {
-        this._connection = connection;
+        this._poolConnection = connection;
     }
     get connection() {
-        return this._connection;
+        return this._poolConnection;
     }
     [Symbol.dispose]() {
         this.release();
     }
     async beginTransaction() {
-        await this._connection.beginTransaction();
+        await this._poolConnection.beginTransaction();
     }
     async commitTransaction() {
-        await this._connection.commit();
+        await this._poolConnection.commit();
     }
     async rollbackTransaction() {
-        await this._connection.rollback();
+        await this._poolConnection.rollback();
     }
     async query(qry, items = []) {
         try {
-            return new Result(await this._connection.query(qry, items));
+            return new Result(await this._poolConnection.query(qry, items));
         }
         catch (e) {
             throw new Error(`Error: ${e.message}.\nQuery: ${qry}\nItems: ${items.join(', ')}`);
@@ -586,7 +586,7 @@ class DatabaseConnection {
         return tableExistsQuery;
     }
     escape(value) {
-        return this._connection.escape(value);
+        return this._poolConnection.escape(value);
     }
     generateParameterizedQuery(queryString, values = []) {
         const placeholders = queryString.match(/\?/g);
@@ -603,7 +603,7 @@ class DatabaseConnection {
         return preparedQuery;
     }
     release() {
-        this._connection.release();
+        this._poolConnection.release();
     }
 }
 

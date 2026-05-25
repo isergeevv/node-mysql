@@ -4,6 +4,7 @@ import type {
   DeleteProps,
   InsertProps,
   Join,
+  QueryableConnection,
   ResultField,
   ResultRow,
   SelectOrder,
@@ -26,7 +27,7 @@ export interface IConnection {
 }
 
 export interface IDatabaseConnection extends IConnection {
-  get connection(): PoolConnection;
+  get connection(): QueryableConnection;
   beginTransaction(): Promise<void>;
   commitTransaction(): Promise<void>;
   rollbackTransaction(): Promise<void>;

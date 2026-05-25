@@ -1,5 +1,12 @@
-import type { PoolConnection } from 'mysql2/promise';
-import type { CreateTableProps, DeleteProps, InsertProps, SelectProps, TableExistsProps, UpdateProps } from './types';
+import type {
+  CreateTableProps,
+  DeleteProps,
+  InsertProps,
+  QueryableConnection,
+  SelectProps,
+  TableExistsProps,
+  UpdateProps,
+} from './types';
 import type {
   ICreateTableQuery,
   IDatabaseConnection,
@@ -17,16 +24,17 @@ import UpdateQuery from './query/UpdateQuery';
 import DeleteQuery from './query/DeleteQuery';
 import CreateTableQuery from './query/CreateTableQuery';
 import TableExistsQuery from './query/TableExistsQuery';
+import { PoolConnection } from 'mysql2/promise';
 
 export default class DatabaseConnection implements IDatabaseConnection {
-  private _connection: PoolConnection;
+  private _poolConnection: QueryableConnection;
 
   constructor(connection: PoolConnection) {
-    this._connection = connection;
+    this._poolConnection = connection as unknown as QueryableConnection;
   }
 
-  get connection(): PoolConnection {
-    return this._connection;
+  get connection(): QueryableConnection {
+    return this._poolConnection;
   }
 
   [Symbol.dispose]() {
@@ -34,20 +42,20 @@ export default class DatabaseConnection implements IDatabaseConnection {
   }
 
   async beginTransaction(): Promise<void> {
-    await this._connection.beginTransaction();
+    await this._poolConnection.beginTransaction();
   }
 
   async commitTransaction(): Promise<void> {
-    await this._connection.commit();
+    await this._poolConnection.commit();
   }
 
   async rollbackTransaction(): Promise<void> {
-    await this._connection.rollback();
+    await this._poolConnection.rollback();
   }
 
   async query(qry: string, items: any[] = []): Promise<IResult> {
     try {
-      return new Result(await this._connection.query(qry, items));
+      return new Result(await this._poolConnection.query(qry, items));
     } catch (e: any) {
       throw new Error(`Error: ${e.message}.\nQuery: ${qry}\nItems: ${items.join(', ')}`);
     }
@@ -114,7 +122,7 @@ export default class DatabaseConnection implements IDatabaseConnection {
   }
 
   escape(value: unknown): string {
-    return this._connection.escape(value);
+    return this._poolConnection.escape(value);
   }
 
   generateParameterizedQuery(queryString: string, values: (string | number | bigint)[] = []): string {
@@ -136,6 +144,6 @@ export default class DatabaseConnection implements IDatabaseConnection {
   }
 
   release() {
-    this._connection.release();
+    this._poolConnection.release();
   }
 }

@@ -1,16 +1,16 @@
 import typescript from 'rollup-plugin-typescript2';
-import resolve from '@rollup/plugin-node-resolve';
 import dts from 'rollup-plugin-dts';
 
-const config = [
+export default [
   {
     input: 'src/index.ts',
     output: {
       file: 'build/esm/index.js',
       format: 'es',
     },
-    plugins: [typescript(), resolve()],
-    external: [],
+    cache: false,
+    plugins: [typescript()],
+    external: ['mysql2/promise'],
   },
   {
     input: 'src/index.ts',
@@ -18,8 +18,9 @@ const config = [
       file: 'build/cjs/index.js',
       format: 'cjs',
     },
-    plugins: [typescript(), resolve()],
-    external: [],
+    cache: false,
+    plugins: [typescript()],
+    external: ['mysql2/promise'],
   },
   {
     input: 'src/index.ts',
@@ -27,9 +28,8 @@ const config = [
       file: 'build/types/index.d.ts',
       format: 'es',
     },
+    cache: false,
     plugins: [dts()],
-    external: [],
+    external: ['mysql2/promise'],
   },
 ];
-
-export default config;
